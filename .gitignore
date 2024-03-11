@@ -2,4 +2,18 @@
 components/arm_RoArm-M1/roarm_ws/
 components/servo_driver/ST\ Servo/
 components/arm_RoArm-M1/RoArm-M1-ESP32/
-python-interface
+
+.vscode/
+.github/workflows/
+.github/*.yml
+
+# python-interface
+python-interface/.github/workflows/*.yml
+python-interface/.github/*.yml
+python-interface/src/beachbot/platforms/__init__.py
+python-interface/src/beachbot/sensors/__init__.py
+python-interface/src/beachbot/sensors/trackedchassis.py
+python-interface/tests/conftest.py
+python-interface/tests/test_methods.py
+python-interface/src/beachbot/robot1.py
+python-interface/src/beachbot/platforms/trackedchassis.py

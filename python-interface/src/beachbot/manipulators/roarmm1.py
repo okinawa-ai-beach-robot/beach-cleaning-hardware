@@ -47,6 +47,8 @@ class RoArmM1(threading.Thread):
     def __init__(self, rate_hz=20, serial_port="/dev/ttyUSB0") -> None:
         # Init superclass thread
         super().__init__()
+        # do not block on exit:
+        self.daemon = True
 
 
         self.interval=1.0/rate_hz
@@ -71,7 +73,8 @@ class RoArmM1(threading.Thread):
         self.rateTZ = 2
 
 
-        self.q_home = [180,10,280,135,180] # Joint angle home position
+        self.q_home = [180.0, -12, 100.2832031, 45.0, 180.0] # Joint angle home position
+        self.qs = self.q_home
 
         # Home position in cartesian space:
         self.initPosX = self.LEN_B + self.LEN_D + self.LEN_E
@@ -79,23 +82,26 @@ class RoArmM1(threading.Thread):
         self.initPosZ = self.LEN_A + self.LEN_C - self.LEN_F
         self.initPosT = 90
 
+        self.gripper_open=180
+        self.gripper_close=260
+
 
         if serial_port is not None:
             
             try:
                 self.device = serial.Serial(serial_port, timeout=0, baudrate=115200)  # open serial port
-                self.device.open()
+                #self.device.open()
             except Exception as e:
                 print("error open serial port: " + str(e))
             self.is_connected = self.device.isOpen()
-
-        if self.is_connected:
-            super().start()
 
         self._write_lock = threading.Lock()
         self._status_lock = threading.Lock()
         self._joint_changed = threading.Condition()
         self._joint_targets = None
+
+        if self.is_connected:
+            super().start()
 
 
            
@@ -103,13 +109,13 @@ class RoArmM1(threading.Thread):
     def run(self):
         while self.is_connected:
             functime = time.time()
-            self.refresh_io()
+            self.refresh_robot_state()
             functime = time.time()-functime
 
-            if functime>self.interval:
+            if functime<self.interval:
                 time.sleep(self.interval - functime)
             else:
-                raise Exception("Error: Out of time!")
+                raise Exception("Error: Out of time! ("+str(functime)+","+str(self.interval)+")")
 
     def write_io(self, data):
         with self._write_lock:
@@ -125,14 +131,17 @@ class RoArmM1(threading.Thread):
         # request arm state
         self.write_io('{"T":5}\n')
         for strdata in self.device.readlines():
-            print(strdata)
+            if not strdata.startswith(b"{"):
+                # Ignore information messages
+                # Only interpred json data {....}
+                continue
             try:
                 data = json.loads(strdata)
                 if "T" not in data:
                     # robot status package recieved:
-                    qs = [int(data["A"+str(num+1)]) for num in range(4)]
-                    taus = [int(data["T"+str(num+1)]) for num in range(4)]
-                    qs_changed = [math.fabs(a-b)>0.1 for a,b in zip(qs, self.qs)].any()
+                    qs = [float(data["A"+str(num+1)]) for num in range(5)]
+                    taus = [float(data["T"+str(num+1)]) for num in range(5)]
+                    qs_changed = any([math.fabs(a-b)>0.1 for a,b in zip(qs, self.qs)])
                     with self._status_lock:
                         self.qs=qs
                         self.taus=taus
@@ -140,14 +149,14 @@ class RoArmM1(threading.Thread):
                         with self._joint_changed:
                             self._joint_changed.notify_all()
             except Exception as ex:
-                print("Read error:" + strdata)
-                print(ex)
+                print("Read error:" + strdata.decode())
+                print("Exception:", ex)
                 self.close_io()
  
 
     def get_joint_angles(self):
         with self._status_lock:
-            res = self.qs
+            res = self.qs.copy()
         return res
     
     def get_joint_torques(self):
@@ -161,8 +170,18 @@ class RoArmM1(threading.Thread):
         return res
     
     def set_joint_targets(self, qs):
-        data = json.dumps({'T':3,'P1':qs[0],'P2':qs[1],'P3':qs[2],'P4':qs[3],'P5':qs[4],'S1':0,'S2':0,'S3':0,'S4':0,'S5':0,'A1':60,'A2':60,'A3':60,'A4':60,'A5':60})
+        # TODO add simple bounds/in-range check!
+        data = json.dumps({'T':1,'P1':qs[0],'P2':qs[1],'P3':qs[2],'P4':qs[3],'P5':qs[4],'S1':0,'S2':0,'S3':0,'S4':0,'S5':0,'A1':60,'A2':60,'A3':60,'A4':60,'A5':60})
         self.write_io(data)
+
+    def set_gripper(self, pos):
+        if pos<0: pos=0
+        if pos>1: pos=1
+        jpos = self.gripper_open + (self.gripper_close - self.gripper_open) * pos
+        qt = self.get_joint_angles()
+        qt[-1]=jpos
+        self.set_joint_targets(qt)
+
 
     def set_joints_enabled(self, is_enabled):
         if is_enabled:

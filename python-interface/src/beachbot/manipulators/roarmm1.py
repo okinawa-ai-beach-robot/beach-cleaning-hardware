@@ -1,5 +1,8 @@
+import os
 import math
+
 import numpy as np
+from scipy import signal
 
 import threading, time, io
 import json
@@ -48,6 +51,8 @@ class RoArmM1(threading.Thread):
 
         self.interval=1.0/rate_hz
         self.is_connected=False
+
+        self.basepath = os.environ.get("BEACHBOTPATH", os.path.join(os.path.expanduser('~'), ".beachbot"+os.sep))
         
 
         # Robot arm definition (mechanical structure):
@@ -89,6 +94,7 @@ class RoArmM1(threading.Thread):
 
         self._write_lock = threading.Lock()
         self._status_lock = threading.Lock()
+        self._joint_changed = threading.Condition()
         self._joint_targets = None
 
 
@@ -126,18 +132,34 @@ class RoArmM1(threading.Thread):
                     # robot status package recieved:
                     qs = [int(data["A"+str(num+1)]) for num in range(4)]
                     taus = [int(data["T"+str(num+1)]) for num in range(4)]
+                    qs_changed = [math.fabs(a-b)>0.1 for a,b in zip(qs, self.qs)].any()
                     with self._status_lock:
                         self.qs=qs
                         self.taus=taus
+                    if qs_changed:
+                        with self._joint_changed:
+                            self._joint_changed.notify_all()
             except Exception as ex:
                 print("Read error:" + strdata)
                 print(ex)
                 self.close_io()
  
 
-        #  
-
-
+    def get_joint_angles(self):
+        with self._status_lock:
+            res = self.qs
+        return res
+    
+    def get_joint_torques(self):
+        with self._status_lock:
+            res = self.taus.copy()
+        return res
+    
+    def get_joint_state(self):
+        with self._status_lock:
+            res = (self.qs.copy(),self.taus.copy())
+        return res
+    
     def set_joint_targets(self, qs):
         data = json.dumps({'T':3,'P1':qs[0],'P2':qs[1],'P3':qs[2],'P4':qs[3],'P5':qs[4],'S1':0,'S2':0,'S3':0,'S4':0,'S5':0,'A1':60,'A2':60,'A3':60,'A4':60,'A5':60})
         self.write_io(data)
@@ -147,6 +169,73 @@ class RoArmM1(threading.Thread):
             self.write_io('{"T":9,"P1":8}\n')
         else:
             self.write_io('{"T":9,"P1":7}\n')
+
+    def wait_for_movement(self, timeout=None):
+        with self._joint_changed:
+            res = self._joint_changed.wait(timeout)
+        return res
+
+    def record_trajectory(self, resample_steps=-1, wait_time_max=10, max_record_steps=250):
+        self.set_joints_enabled(False)
+        time.sleep(0.5)
+        q,tau = self.get_joint_state()
+        qs=[q]
+        taus=[tau]
+        ts=[0]
+        ts_start=time.time()
+
+        rec_steps=0
+        while(self.wait_for_movement(wait_time_max) and rec_steps<=max_record_steps):
+            # Robot moved, record new position
+            q,tau = self.get_joint_state()
+            qs.append(q)
+            taus.append(tau)
+            ts.append(time.time()-ts_start)
+            rec_steps+=1
+
+        qs = np.stack(qs)
+        taus = np.stack(taus)
+
+        if resample_steps>2:
+            qs_resample = signal.resample(qs, resample_steps)
+            qs_resample[-1,:]=qs[-1,:]
+            qs = qs_resample
+
+            taus_resample = signal.resample(taus, resample_steps)
+            taus_resample[-1,:]=taus[-1,:]
+            taus = taus_resample
+
+            ts_resample = signal.resample(ts, resample_steps)
+            ts_resample[-1,:]=ts[-1,:]
+            ts = ts_resample
+
+        return qs,taus,ts
+    
+    def replay_trajectory(self, qs, ts=None, freq=20):
+        self.set_joints_enabled(True)
+        time.sleep(0.5)
+        ts_start=time.time()
+
+        for t in range(qs.shape[0]):
+            self.set_joint_targets(qs[t])
+            wtime=0
+            ts_now = time.time()
+            if ts==None:
+                # fixed replay frequency
+                wtime = (1.0/freq) - (ts_now-ts_start)
+                ts_start = ts_now
+            else:
+                # wait for timestamp
+                wtime = ts[t] - (ts_now-ts_start)
+                
+            if (wtime>0): time.sleep(wtime)
+
+
+
+
+
+
+
 
 
 

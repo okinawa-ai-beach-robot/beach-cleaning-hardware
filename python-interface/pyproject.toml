@@ -19,7 +19,8 @@ classifiers = [
 license = { text = "TBD" }
 dependencies = [
     "numpy",
-    "pyserial"
+    "pyserial",
+    "scipy"
 ]
 requires-python = ">=3.8.1"
 

@@ -1,1 +1,4 @@
 *.FCBak
+
+# Ignore folders starting with underscore: I use them as local test folders
+\_*/

@@ -2,7 +2,10 @@ import os
 import math
 
 import numpy as np
-from scipy import signal
+try:
+    from scipy import signal
+except:
+    print("scipy requites dorgraded numpy version... do a pip install numpy==1.22")
 
 import threading, time, io
 import json

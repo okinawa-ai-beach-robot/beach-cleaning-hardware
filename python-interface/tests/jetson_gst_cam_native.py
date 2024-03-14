@@ -1,12 +1,13 @@
 import beachbot
 import time
 
+
 viewer = beachbot.utils.ImageViewerMatplotlib
 
 # This alternative image viewer does not work yet... TODO
 #viewer = beachbot.utils.ImageViewerJetson
 
-cam1 = beachbot.sensors.UsbCameraOpenCV()
+cam1 = beachbot.sensors.JetsonGstCameraNative()
 
 cam1.list_cameras()
 print("My resolution is:", cam1.get_size())

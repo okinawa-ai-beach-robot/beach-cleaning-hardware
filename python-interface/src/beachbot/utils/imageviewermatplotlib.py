@@ -2,7 +2,7 @@
 # import cv2
 import matplotlib.pyplot as plt 
 
-class ImageViewer():
+class ImageViewerMatplotlib():
     def __init__(self, title=None) -> None:
         # self._winname = str(uuid.uuid1())
         # cv2.namedWindow(self._winname)

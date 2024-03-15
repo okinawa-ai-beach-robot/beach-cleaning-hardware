@@ -142,8 +142,8 @@ class RoArmM1(threading.Thread):
                 data = json.loads(strdata)
                 if "T" not in data:
                     # robot status package recieved:
-                    qs = [float(data["A"+str(num+1)]) for num in range(5)]
-                    taus = [float(data["T"+str(num+1)]) for num in range(5)]
+                    qs = [float(data.get("A"+str(num+1),0)) for num in range(5)]
+                    taus = [float(data.get("T"+str(num+1),0)) for num in range(5)]
                     qs_changed = any([math.fabs(a-b)>0.1 for a,b in zip(qs, self.qs)])
                     with self._status_lock:
                         self.qs=qs

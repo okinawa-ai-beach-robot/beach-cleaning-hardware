@@ -1,7 +1,11 @@
 import os, threading
 
-from jetson_utils import videoSource, videoOutput
-from jetson_utils import cudaImage, cudaToNumpy
+try:
+    from jetson_utils import videoSource, videoOutput
+    from jetson_utils import cudaImage, cudaToNumpy
+except ModuleNotFoundError as ex:
+    print("Jetson utils not installed or not available!\nJetsonGstCameraNative not available!")
+
 
 
 

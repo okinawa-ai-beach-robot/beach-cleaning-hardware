@@ -1,5 +1,13 @@
-from jetson_utils import videoOutput
-from jetson_utils import cudaFromNumpy
+
+
+
+try:
+    from jetson_utils import videoOutput
+    from jetson_utils import cudaFromNumpy
+except ModuleNotFoundError as ex:
+    print("Jetson utils not installed or not available!\nJetsonGstCameraNative not available!")
+
+
 
 class ImageViewerJetson():
     def __init__(self, title=None) -> None:

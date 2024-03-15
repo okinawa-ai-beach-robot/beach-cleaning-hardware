@@ -12,6 +12,8 @@ except ModuleNotFoundError as ex:
 class JetsonGstCameraNative():
     def __init__(self, width=1920, height= 1080, fps=30, dev_id=0) -> None:
         self._camera = videoSource("csi://"+str(dev_id))
+        # TODO read docs on how to set resolution with this interface
+        print("TODO fps and resolution swtich not yet implemented -> TODO check docs!!")
             
     @staticmethod
     def list_cameras():

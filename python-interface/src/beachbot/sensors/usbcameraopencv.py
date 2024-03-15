@@ -7,17 +7,19 @@ import cv2
 
 
 class UsbCameraOpenCV(threading.Thread):
-    def __init__(self, width=640, height=480, fps=15, dev_id=1) -> None:
+    def __init__(self, width=640, height=480, fps=25, dev_id=1) -> None:
         # Init superclass thread
         super().__init__()
         # do not block on exit:
         self.daemon = True
         self._stopped = True
+        self._frame = None
 
         self._cap = cv2.VideoCapture(dev_id)
         self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
         self._cap.set(cv2.CAP_PROP_FPS, fps)
+    
         
         if self._cap.isOpened():
             self._cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
@@ -47,7 +49,10 @@ class UsbCameraOpenCV(threading.Thread):
         self._cap.release()
 
     def get_size(self):
-        return (int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+        if self._frame.shape is not None:
+            return (self._frame.shape[1], self._frame.shape[0])
+        return (0,0)
+        # This does not reflect actual size: return (int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 
 
 

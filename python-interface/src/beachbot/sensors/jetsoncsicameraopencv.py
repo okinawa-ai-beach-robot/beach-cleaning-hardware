@@ -13,8 +13,8 @@ def gstreamer_pipeline_builder(
     sensor_id=0,
     capture_width=1920,
     capture_height=1080,
-    display_width=960,
-    display_height=540,
+    display_width=-1,
+    display_height=-1,
     framerate=30,
     flip_method=0,
 ):
@@ -31,21 +31,22 @@ def gstreamer_pipeline_builder(
             capture_height,
             framerate,
             flip_method,
-            display_width,
-            display_height,
+            display_width if display_width>0 else capture_width,
+            display_height if display_height>0 else capture_height,
         )
     )
 
 
 
 class JetsonCsiCameraOpenCV(threading.Thread):
-    def __init__(self, width=1920, height= 1080, fps=30, dev_id=0) -> None:
+    def __init__(self, width=1280, height= 720, fps=30, dev_id=0) -> None:
         # Init superclass thread
         super().__init__()
         # do not block on exit:
         self.daemon = True
         self._stopped = True
-        
+        self._frame = None
+
         self._cap = cv2.VideoCapture(gstreamer_pipeline_builder(sensor_id=dev_id, capture_width=width, capture_height=height, framerate=fps, flip_method=2), cv2.CAP_GSTREAMER)
         
         if self._cap.isOpened():

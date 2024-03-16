@@ -2,13 +2,14 @@ import os, threading
 import cv2
 
 
-
 """ 
 gstreamer_pipeline_builder returns a GStreamer pipeline for capturing from the CSI camera
 Flip the image by setting the flip_method (most common values: 0 and 2)
 display_width and display_height determine the size of each camera pane in the window on the screen
 Default 1920x1080 displayd in a 1/4 size window
 """
+
+
 def gstreamer_pipeline_builder(
     sensor_id=0,
     capture_width=1920,
@@ -31,15 +32,14 @@ def gstreamer_pipeline_builder(
             capture_height,
             framerate,
             flip_method,
-            display_width if display_width>0 else capture_width,
-            display_height if display_height>0 else capture_height,
+            display_width if display_width > 0 else capture_width,
+            display_height if display_height > 0 else capture_height,
         )
     )
 
 
-
 class JetsonCsiCameraOpenCV(threading.Thread):
-    def __init__(self, width=1280, height= 720, fps=30, dev_id=0) -> None:
+    def __init__(self, width=1280, height=720, fps=30, dev_id=0) -> None:
         # Init superclass thread
         super().__init__()
         # do not block on exit:
@@ -47,19 +47,28 @@ class JetsonCsiCameraOpenCV(threading.Thread):
         self._stopped = True
         self._frame = None
 
-        self._cap = cv2.VideoCapture(gstreamer_pipeline_builder(sensor_id=dev_id, capture_width=width, capture_height=height, framerate=fps, flip_method=2), cv2.CAP_GSTREAMER)
-        
+        self._cap = cv2.VideoCapture(
+            gstreamer_pipeline_builder(
+                sensor_id=dev_id,
+                capture_width=width,
+                capture_height=height,
+                framerate=fps,
+                flip_method=2,
+            ),
+            cv2.CAP_GSTREAMER,
+        )
+
         if self._cap.isOpened():
             self._cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
             self.ret_val, bgr_frame = self._cap.read()
             self._frame = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2RGB)
-            self._stopped=False
+            self._stopped = False
             super().start()
-            
+
     @staticmethod
     def list_cameras():
-        print (os.popen("v4l2-ctl --list-devices").read())
-        print (os.popen("v4l2-ctl --list-formats-ext").read())
+        print(os.popen("v4l2-ctl --list-devices").read())
+        print(os.popen("v4l2-ctl --list-formats-ext").read())
 
     def run(self):
         while not self._stopped:
@@ -70,15 +79,13 @@ class JetsonCsiCameraOpenCV(threading.Thread):
 
     def read(self):
         return self._frame
-    
+
     def stop(self):
         self._stopped = True
         self._cap.release()
 
     def get_size(self):
-        return (int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
-
-
-
-
-
+        return (
+            int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
+            int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
+        )

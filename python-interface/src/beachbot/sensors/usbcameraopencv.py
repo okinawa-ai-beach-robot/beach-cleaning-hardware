@@ -2,10 +2,6 @@ import os, threading
 import cv2
 
 
-
-
-
-
 class UsbCameraOpenCV(threading.Thread):
     def __init__(self, width=640, height=480, fps=25, dev_id=1) -> None:
         # Init superclass thread
@@ -19,21 +15,18 @@ class UsbCameraOpenCV(threading.Thread):
         self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
         self._cap.set(cv2.CAP_PROP_FPS, fps)
-    
-        
+
         if self._cap.isOpened():
             self._cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
             self.ret_val, bgr_frame = self._cap.read()
             self._frame = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2RGB)
-            self._stopped=False
+            self._stopped = False
             super().start()
 
     @staticmethod
     def list_cameras():
-        print (os.popen("v4l2-ctl --list-devices").read())
-        print (os.popen("v4l2-ctl -d /dev/video1 --list-formats-ext").read())
-                
-            
+        print(os.popen("v4l2-ctl --list-devices").read())
+        print(os.popen("v4l2-ctl -d /dev/video1 --list-formats-ext").read())
 
     def run(self):
         while not self._stopped:
@@ -43,7 +36,7 @@ class UsbCameraOpenCV(threading.Thread):
 
     def read(self):
         return self._frame
-    
+
     def stop(self):
         self._stopped = True
         self._cap.release()
@@ -51,10 +44,5 @@ class UsbCameraOpenCV(threading.Thread):
     def get_size(self):
         if self._frame.shape is not None:
             return (self._frame.shape[1], self._frame.shape[0])
-        return (0,0)
+        return (0, 0)
         # This does not reflect actual size: return (int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
-
-
-
-
-

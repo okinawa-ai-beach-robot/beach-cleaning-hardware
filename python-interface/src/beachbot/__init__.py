@@ -12,7 +12,7 @@ except PackageNotFoundError:
     pass
 
 
-__all__ = ["manipulators", "sensors"] # "sensors", "platforms"
+__all__ = ["manipulators", "sensors"]  # "sensors", "platforms"
 
 from . import manipulators
 from . import sensors

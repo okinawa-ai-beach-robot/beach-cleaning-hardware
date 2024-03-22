@@ -137,11 +137,11 @@ void anglePosInit(){
 	AngleList[3] = 280;
 	AngleList[4] = 135;
 	AngleList[5] = 180;
-	st.WritePosEx(1, int(angleGenOut(AngleList[1])+0.5), 500, 150);
-	st.WritePosEx(2, int(angleGenOut(AngleList[2])+0.5), 1500, 150);
-	st.WritePosEx(3, int(angleGenOut(AngleList[3])+0.5), 500, 150);
-	st.WritePosEx(4, int(angleGenOut(AngleList[4])+0.5), 500, 150);
-	st.WritePosEx(5, int(angleGenOut(AngleList[5])+0.5), 500, 150);
+	setTargetJointAngle(1, int(angleGenOut(AngleList[1])+0.5), 500, 150);
+	setTargetJointAngle(2, int(angleGenOut(AngleList[2])+0.5), 1500, 150);
+	setTargetJointAngle(3, int(angleGenOut(AngleList[3])+0.5), 500, 150);
+	setTargetJointAngle(4, int(angleGenOut(AngleList[4])+0.5), 500, 150);
+	setTargetJointAngle(5, int(angleGenOut(AngleList[5])+0.5), 500, 150);
 	globalCmdType = TypeAngleCtrl;
 	bool posGoal_1 = false;
 	bool posGoal_2 = false;
@@ -200,7 +200,11 @@ void coordPosInit(){
 	CoordList[4] = 90;
 	CoordList[5] = 180;
 	allAxisCtrl(CoordList[1], CoordList[2], CoordList[3], CoordList[4]);
-	st.WritePosEx(5, int(angleGenOut(CoordList[5])+0.5), 500, 150);
+	//st.WritePosEx(5, int(angleGenOut(CoordList[5])+0.5), 500, 150);
+	setTargetJointAngle(5, int(angleGenOut(CoordList[5])+0.5), 500, 150);
+
+
+
 	globalCmdType = TypeCoordCtrl;
 	bool posGoal_1 = false;
 	bool posGoal_2 = false;
@@ -406,6 +410,7 @@ void servoIDSet(int InputSetID){
 		Serial.println("SetID");
 		int PingStatus;
 		PingStatus = st.Ping(InputSetID);
+		if (PingStatus==-1) PingStatus = sc.Ping(InputSetID);
 		if(PingStatus!=-1){
 			Serial.print("New ID set successfully:");
 			Serial.println(InputSetID);
@@ -418,17 +423,36 @@ void servoIDSet(int InputSetID){
 
 
 void searchServo(){
+	Serial.println("searching for Servos!!!");
 	servoNumDetected = 0;
 	servoID_Detected = -1;
 	for(int i = 0; i <= 6; i++){
 		int PingStatus;
-		PingStatus = st.Ping(i);
-		if(PingStatus!=-1){
+		int type = st.readByte(i, 3);
+		if (type==9)
+		{
+			PingStatus = st.Ping(i); 
+			if(PingStatus!=-1)
+			{
+				servoNumDetected++;
+				servoID_Detected = i;
+				Serial.print("STservoNumDetected:");Serial.println(servoNumDetected);
+				Serial.print("STservoID_Detected:");Serial.println(servoID_Detected);
+			}
+		}
+		else if (type==5)
+		{
+			// check sc servo!
+			PingStatus = sc.Ping(i);
+			if(PingStatus!=-1)
+			{
 			servoNumDetected++;
 			servoID_Detected = i;
-			Serial.print("servoNumDetected:");Serial.println(servoNumDetected);
-			Serial.print("servoID_Detected:");Serial.println(servoID_Detected);
+			Serial.print("SCservoNumDetected:");Serial.println(servoNumDetected);
+			Serial.print("SCservoID_Detected:");Serial.println(servoID_Detected);
+			}
 		}
+
 	}
 }
 
@@ -438,13 +462,13 @@ void S2AutoConfigFunc(){
 	AngleList[3] = 270;
 	AngleList[4] =  90;
 	AngleList[5] = 180;
-	st.WritePosEx(1, int(angleGenOut(AngleList[1])+0.5), 100, 150);
-	st.WritePosEx(3, int(angleGenOut(AngleList[3])+0.5), 100, 150);
-	st.WritePosEx(4, int(angleGenOut(AngleList[4])+0.5), 100, 150);
-	st.WritePosEx(5, int(angleGenOut(AngleList[5])+0.5), 100, 150);
+	setTargetJointAngle(1, int(angleGenOut(AngleList[1])+0.5), 100, 150);
+	setTargetJointAngle(3, int(angleGenOut(AngleList[3])+0.5), 100, 150);
+	setTargetJointAngle(4, int(angleGenOut(AngleList[4])+0.5), 100, 150);
+	setTargetJointAngle(5, int(angleGenOut(AngleList[5])+0.5), 100, 150);
 
 	setMode(2, 3);
-	st.WritePosEx(2, -20000, 500, 50);
+	setTargetJointAngle(2, -20000, 500, 50);
 	delay(1000);
 	while(1){
 		getFeedBack(2);
@@ -452,7 +476,7 @@ void S2AutoConfigFunc(){
 		if(loadRead[2] > torqueThreshold){
 			Serial.println("Reaching the edge.");
 			servoStop(2);
-			st.WritePosEx(2, reverseRange, 1500, 150);
+			setTargetJointAngle(2, reverseRange, 1500, 150);
 			RGBcolor(255, 32, 0);
 			delay(11000);
 			setMiddle(2);
@@ -489,11 +513,13 @@ void bootPosCheck(){
 	AngleList[3] = 270;
 	AngleList[4] =  90;
 	AngleList[5] = 180;
-	st.WritePosEx(1, int(angleGenOut(AngleList[1])+0.5), 100, 150);
-	st.WritePosEx(2, int(angleGenOut(AngleList[2])+0.5), 500, 150);
-	st.WritePosEx(3, int(angleGenOut(AngleList[3])+0.5), 100, 150);
-	st.WritePosEx(4, int(angleGenOut(AngleList[4])+0.5), 100, 150);
-	st.WritePosEx(5, int(angleGenOut(AngleList[5])+0.5), 100, 150);
+	Serial.println("setTargetJointAngle0");
+	setTargetJointAngle(1, int(angleGenOut(AngleList[1])+0.5), 100, 150);
+	setTargetJointAngle(2, int(angleGenOut(AngleList[2])+0.5), 500, 150);
+	setTargetJointAngle(3, int(angleGenOut(AngleList[3])+0.5), 100, 150);
+	setTargetJointAngle(4, int(angleGenOut(AngleList[4])+0.5), 100, 150);
+	setTargetJointAngle(5, int(angleGenOut(AngleList[5])+0.5), 100, 150);
+	Serial.println("setTargetJointAngle");
 
 	delay(1000);
 	while(1){
@@ -502,7 +528,7 @@ void bootPosCheck(){
 			Serial.println("Reaching the edge.");
 			servoStop(2);
 			setMode(2, 3);
-			st.WritePosEx(2, reverseRange, 1500, 150);
+			setTargetJointAngle(2, reverseRange, 1500, 150);
 			RGBcolor(255, 32, 0);
 			delay(6000);
 			setMiddle(2);
@@ -511,11 +537,14 @@ void bootPosCheck(){
 			break;
 		}
 		else if(posRead[2] > int(angleGenOut(AngleList[2])+0.5) - posCheckOffset && posRead[2] < int(angleGenOut(AngleList[2])+0.5) + posCheckOffset){
+			Serial.println("break it!!");
 			break;
 		}
 	}
 	delay(50);
+	Serial.println("anglePosInit");
 	anglePosInit();
+	Serial.println("all done?");
 }
 
 
@@ -526,50 +555,50 @@ void typeServoConfig(int cmdAInput, int cmdBInput){
 
 		case Servo_1_Increase:  Serial.println("Servo_1_Increase");
 							    BasePos[1] += 1;
-							    st.WritePosEx(1, BasePos[1], 3400, 150); break;
+							    setTargetJointAngle(1, BasePos[1], 3400, 150); break;
 		case Servo_1_Decrease:  Serial.println("Servo_1_Decrease"); 
 							    BasePos[1] -= 1; 
-							    st.WritePosEx(1, BasePos[1], 3400, 150); break;
+							    setTargetJointAngle(1, BasePos[1], 3400, 150); break;
 		case Servo_1_Set:       Serial.println("Servo_1_Set");
 							    setMiddle(1);
 							    BasePos[1] = 2047;AngleList[1] = 180;    break;
 
 		case Servo_2_Increase:  Serial.println("Servo_2_Increase");
 							    BasePos[2] += 1; 
-							    st.WritePosEx(2, BasePos[2], 3400, 150); break;
+							    setTargetJointAngle(2, BasePos[2], 3400, 150); break;
 		case Servo_2_Decrease:  Serial.println("Servo_2_Decrease");
 							    BasePos[2] -= 1; 
-							    st.WritePosEx(2, BasePos[2], 3400, 150); break;
+							    setTargetJointAngle(2, BasePos[2], 3400, 150); break;
 		case Servo_2_Set:       Serial.println("Servo_2_Set");
 							    setMiddle(2);
 							    BasePos[2] = 2047;AngleList[2] = 180;    break;
 
 		case Servo_3_Increase:  Serial.println("Servo_3_Increase");
 							    BasePos[3] += 1; 
-							    st.WritePosEx(3, BasePos[3], 3400, 150); break;
+							    setTargetJointAngle(3, BasePos[3], 3400, 150); break;
 		case Servo_3_Decrease:  Serial.println("Servo_3_Decrease");
 							    BasePos[3] -= 1; 
-							    st.WritePosEx(3, BasePos[3], 3400, 150); break;
+							    setTargetJointAngle(3, BasePos[3], 3400, 150); break;
 		case Servo_3_Set:       Serial.println("Servo_3_Set");
 							    setMiddle(3);
 							    BasePos[3] = 2047;AngleList[3] = 180;    break;
 
 		case Servo_4_Increase:  Serial.println("Servo_4_Increase");
 							    BasePos[4] += 1; 
-							    st.WritePosEx(4, BasePos[4], 3400, 150); break;
+							    setTargetJointAngle(4, BasePos[4], 3400, 150); break;
 		case Servo_4_Decrease:  Serial.println("Servo_4_Decrease");
 							    BasePos[4] -= 1; 
-							    st.WritePosEx(4, BasePos[4], 3400, 150); break;
+							    setTargetJointAngle(4, BasePos[4], 3400, 150); break;
 		case Servo_4_Set:       Serial.println("Servo_4_Set");
 							    setMiddle(4);
 							    BasePos[4] = 2047;AngleList[4] = 180;    break;
 
 		case Servo_5_Increase:  Serial.println("Servo_5_Increase");
 							    BasePos[5] += 1; 
-							    st.WritePosEx(5, BasePos[5], 3400, 150); break;
+							    setTargetJointAngle(5, BasePos[5], 3400, 150); break;
 		case Servo_5_Decrease:  Serial.println("Servo_5_Decrease");
 							    BasePos[5] -= 1; 
-							    st.WritePosEx(5, BasePos[5], 3400, 150); break;
+							    setTargetJointAngle(5, BasePos[5], 3400, 150); break;
 		case Servo_5_Set:       Serial.println("Servo_5_Set");
 							    setMiddle(5);
 							    BasePos[5] = 2047;AngleList[5] = 180;    break;
@@ -601,6 +630,20 @@ void robotConfig(int cmdAInput){
 void mainPage(){
 	if(DebugMode){Serial.println("MainPage");}
 }
+
+void set_max_torque()
+{
+	Serial.println("STUB! set_max_torque func");
+	
+}
+
+// TODO
+// void set_pwm()
+// {
+// 	Serial.println("STUB! set_pwm func");
+
+// }
+
 
 
 void commandProcessing(int cmdInputType, int cmdInputA, int cmdInputB){
@@ -644,7 +687,7 @@ void cmdThreading(){
 			}
 			int ServoPosGenOut = int(angleGenOut(AngleList[globalAngleCmdA])+0.5);
 			BasePos[globalAngleCmdA] = ServoPosGenOut;
-			st.WritePosEx(globalAngleCmdA, ServoPosGenOut, 3400, 150);
+			setTargetJointAngle(globalAngleCmdA, ServoPosGenOut, 3400, 150);
 			return;
 			// Serial.println("Status: 1");
 		}
@@ -680,7 +723,7 @@ void cmdThreading(){
 			}
 			int ServoPosGenOut = int(angleGenOut(AngleList[globalAngleCmdA])+0.5);
 			BasePos[globalAngleCmdA] = ServoPosGenOut;
-			st.WritePosEx(globalAngleCmdA, ServoPosGenOut, 3400, 150);
+			setTargetJointAngle(globalAngleCmdA, ServoPosGenOut, 3400, 150);
 			return;
 			// Serial.println("Status: 3");
 		}

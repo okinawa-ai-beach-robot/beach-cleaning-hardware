@@ -1,5 +1,7 @@
 #include <Arduino.h>
 
+//#include<esp32-hal.h>
+
 
 // WIFI_AP settings.
 const char* AP_SSID = "ESP32_DEV";
@@ -183,6 +185,7 @@ WebServer server(80);
 #include "PreferencesConfig.h"
 
 #include "RGB_CTRL.h"
+#include "PWM_INTF.h"
 #include "STSCTRL.h"
 #include "ARM_CTRL.h"
 #include "JSON_CTRL.h"
@@ -196,35 +199,53 @@ void setup() {
   Serial.begin(115200);
   while(!Serial) {}
 
+  Serial.print("ONLINE!!!");
+
   preferences.begin("RoArm-M1", false);
   stepNumMax = preferences.getInt("stepNumMax", 0);
 
   InitRGB();
+  //InitPwmIo();
 
   getMAC();
   
   boardDevInit();
 
   servoInit();
+  Serial.print("INIT done9!!!");
 
   bootPosCheck();
+  // Serial.print("INIT done8!!!");
 
-  wifiInit();
+  // wifiInit();
+  // Serial.print("INIT done7!!!");
 
-  espNowInit();
+  // espNowInit();
+  // Serial.print("INIT done1!!!");
 
-  webServerSetup();
+  // webServerSetup();
+  // Serial.print("INIT done2!!!");
 
-  threadInit();
+  // threadInit();
 
-  if(!torqueLockStatus){
-    torqueCtrlAll(0);
-  }
+  // Serial.print("INIT done3!!!");
+
+  // if(!torqueLockStatus){
+  //   torqueCtrlAll(0);
+  // }
+
+  //  Serial.print("INIT done!!!");
+  
 }
 
 
 void loop() {
-  server.handleClient();
-  serialCtrl();
+  // server.handleClient();
+  // serialCtrl();
+delay(2000);
+  setTargetJointAngle(5, 500, 100, 150);
+delay(2000);
+  setTargetJointAngle(5, 800, 100, 150);
+
   delay(10);
 }

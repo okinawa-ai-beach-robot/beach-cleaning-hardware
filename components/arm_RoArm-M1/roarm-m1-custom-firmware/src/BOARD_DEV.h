@@ -68,7 +68,7 @@ void debugInfo(){
 void boardDevInit(){
   Wire.begin(S_SDA, S_SCL);
   InitScreen();
-  InitRGB();
+  //InitRGB();
 }
 
 

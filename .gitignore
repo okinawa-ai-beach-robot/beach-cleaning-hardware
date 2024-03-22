@@ -17,3 +17,7 @@ python-interface/tests/conftest.py
 python-interface/tests/test_methods.py
 python-interface/src/beachbot/robot1.py
 python-interface/src/beachbot/platforms/trackedchassis.py
+
+
+components/servo_driver/SC_Servo_demo
+components/arm_RoArm-M1/test/

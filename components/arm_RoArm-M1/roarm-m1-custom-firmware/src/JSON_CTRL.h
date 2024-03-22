@@ -1,5 +1,11 @@
 #include <ArduinoJson.h>
 
+
+void set_led_rgb(uint8_t nr, uint8_t r, uint8_t g, uint8_t b)
+{
+	setSingleLED(nr, matrix.Color(r, g, b));
+}
+
 StaticJsonDocument<400> jsonCmdReceive;
 StaticJsonDocument<300> jsonInfoBufferSend;
 StaticJsonDocument<200> jsonCmdSend;
@@ -92,6 +98,11 @@ DynamicJsonDocument jsonStepMove(1024);
 #define ROARM_M1_CONFIG  9
 #define HELP             10
 
+#define SET_MAX_TORQUE 100
+#define SET_PWM 101
+#define SET_LED 102
+
+
 
 // === === === === === === ===
 // record and replay.
@@ -164,18 +175,18 @@ int configType = 0;
 
 void torqueAll(bool torqueCmd){
   if(torqueCmd){
-    st.EnableTorque(1, 1);
-    st.EnableTorque(2, 1);
-    st.EnableTorque(3, 1);
-    st.EnableTorque(4, 1);
-    st.EnableTorque(5, 1);
+    servoTorque(1,1);
+    servoTorque(2,1);
+    servoTorque(3,1);
+    servoTorque(4,1);
+    servoTorque(5,1);
   }
   else{
-    st.EnableTorque(1, 0);
-    st.EnableTorque(2, 0);
-    st.EnableTorque(3, 0);
-    st.EnableTorque(4, 0);
-    st.EnableTorque(5, 0);
+    servoTorque(1,0);
+    servoTorque(2,0);
+    servoTorque(3,0);
+    servoTorque(4,0);
+    servoTorque(5,0);
   }
 }
 
@@ -199,27 +210,40 @@ void emergencyStop(){
   Serial.println("---    Torque Lock ON     ---");
 }
 
+void set_led()
+{
+  uint8_t nr = jsonCmdReceive["nr"].as<int>();
+  uint8_t r = jsonCmdReceive["r"].as<int>();
+  uint8_t g = jsonCmdReceive["g"].as<int>();
+  uint8_t b = jsonCmdReceive["b"].as<int>();
+
+  set_led_rgb(nr, r, g, b);
+
+}
+
 
 void getAngTorInfo(){
-  if(st.FeedBack(1)!=-1){
-    jsonStInfoSend["A1"] = angleGenOutReverse(st.ReadPos(-1));
-    jsonStInfoSend["T1"] = st.ReadLoad(-1);
+
+
+  if(getFeedBack(1)){
+    jsonStInfoSend["A1"] = angleGenOutReverse(posRead[1]);
+    jsonStInfoSend["T1"] = loadRead[1];
   }
-  if(st.FeedBack(2)!=-1){
-    jsonStInfoSend["A2"] = angleGenOutReverse(st.ReadPos(-1))/3-15;
-    jsonStInfoSend["T2"] = st.ReadLoad(-1);
+  if(getFeedBack(2)){
+    jsonStInfoSend["A2"] = angleGenOutReverse(posRead[2])/3-15;
+    jsonStInfoSend["T2"] = loadRead[2];
   }
-  if(st.FeedBack(3)!=-1){
-    jsonStInfoSend["A3"] = angleGenOutReverse(st.ReadPos(-1))-180;
-    jsonStInfoSend["T3"] = st.ReadLoad(-1);
+  if(getFeedBack(3)){
+    jsonStInfoSend["A3"] = angleGenOutReverse(posRead[3])-180;
+    jsonStInfoSend["T3"] = loadRead[3];
   }
-  if(st.FeedBack(4)!=-1){
-    jsonStInfoSend["A4"] = STDirection[3]*(angleGenOutReverse(st.ReadPos(-1))-180);
-    jsonStInfoSend["T4"] = st.ReadLoad(-1);
+  if(getFeedBack(4)){
+    jsonStInfoSend["A4"] = STDirection[3]*(angleGenOutReverse(posRead[4])-180);
+    jsonStInfoSend["T4"] = loadRead[4];
   }
-  if(st.FeedBack(5)!=-1){
-    jsonStInfoSend["A5"] = angleGenOutReverse(st.ReadPos(-1));
-    jsonStInfoSend["T5"] = st.ReadLoad(-1);
+  if(getFeedBack(5)){
+    jsonStInfoSend["A5"] = angleGenOutReverse(posRead[5]);
+    jsonStInfoSend["T5"] = loadRead[5];
   }
 
   char angleInfoJson[300];
@@ -247,16 +271,16 @@ void getInfoBuffer(){
 
 
 void getStPos(){
-  if(st.FeedBack(1)!=-1){jsonPosList[0] = st.ReadPos(-1);}
+  if(getFeedBack(1)){jsonPosList[0] = posRead[1];}
+  else{jsonPosList[0] = 2047;}
+  if(getFeedBack(2)){jsonPosList[1] = posRead[2];}
   else{jsonPosList[1] = 2047;}
-  if(st.FeedBack(2)!=-1){jsonPosList[1] = st.ReadPos(-1);}
-  else{jsonPosList[1] = 2047;}
-  if(st.FeedBack(3)!=-1){jsonPosList[2] = st.ReadPos(-1);}
-  else{jsonPosList[1] = 2047;}
-  if(st.FeedBack(4)!=-1){jsonPosList[3] = st.ReadPos(-1);}
-  else{jsonPosList[1] = 2047;}
-  if(st.FeedBack(5)!=-1){jsonPosList[4] = st.ReadPos(-1);}
-  else{jsonPosList[1] = 2047;}
+  if(getFeedBack(3)){jsonPosList[2] = posRead[3];}
+  else{jsonPosList[2] = 2047;}
+  if(getFeedBack(4)){jsonPosList[3] = posRead[4];}
+  else{jsonPosList[3] = 2047;}
+  if(getFeedBack(5)){jsonPosList[4] = posRead[5];}
+  else{jsonPosList[4] = 2047;}
 }
 
 
@@ -299,7 +323,14 @@ void jsonAngleCtrl(bool setInit){
     jsonAccCtrl[3] = 60;
     jsonAccCtrl[4] = 60;
   }
-  st.SyncWritePosEx(jsonID, 5, jsonPosCtrl, jsonSpdCtrl, jsonAccCtrl);
+  //Old code: st.SyncWritePosEx(jsonID, 5, jsonPosCtrl, jsonSpdCtrl, jsonAccCtrl);
+  for (uint8_t i=0; i<5; i++)
+  {
+    setTargetJointAngle(jsonID[i],jsonPosCtrl[i],jsonSpdCtrl[i],jsonAccCtrl[i]);
+  }
+  
+
+
 
   jsonAngleSend["T"]  = 1;
   jsonAngleSend["P1"] = angleGenOutReverse(jsonPosCtrl[0]);
@@ -345,7 +376,8 @@ void jsonCoordCtrl(bool setInit){
     jsonCtrlDelay   = 10;
     jsonSpdCtrl[4]  = 200;
   }
-  st.WritePosEx(5, jsonPosCtrl[4], jsonSpdCtrl[4], 50);
+  setTargetJointAngle(5,jsonPosCtrl[4],jsonSpdCtrl[4], 50);
+  //st.WritePosEx(5, jsonPosCtrl[4], jsonSpdCtrl[4], 50);
   float deltaSteps = maxNumInArray();
   for(float i=0;i<=1;i+=1/deltaSteps){
     if(processType == EMERGENCY_STOP){
@@ -422,7 +454,11 @@ void jsonStPosCtrl(bool setInit){
     jsonAccCtrl[4] = 60;
   }
 
-  st.SyncWritePosEx(jsonID, 5, jsonPosCtrl, jsonSpdCtrl, jsonAccCtrl);
+  //st.SyncWritePosEx(jsonID, 5, jsonPosCtrl, jsonSpdCtrl, jsonAccCtrl);
+  for (uint8_t i=0; i<5; i++)
+  {
+    setTargetJointAngle(jsonID[i],jsonPosCtrl[i],jsonSpdCtrl[i],jsonAccCtrl[i]);
+  }
 
   jsonStPosSend["T"]  = 3;
   jsonStPosSend["P1"] = jsonPosCtrl[0];
@@ -512,10 +548,18 @@ void movetoStep(int stepSelect){
       stepsCtrlBuffer[2] = int(besselCtrl(stepsCtrlLast[2], stepsCtrlGoal[2], i)+0.5);
       stepsCtrlBuffer[3] = int(besselCtrl(stepsCtrlLast[3], stepsCtrlGoal[3], i)+0.5);
       stepsCtrlBuffer[4] = int(besselCtrl(stepsCtrlLast[4], stepsCtrlGoal[4], i)+0.5);
-      st.SyncWritePosEx(jsonID, 5, stepsCtrlBuffer, stepsCtrlSpeed, stepsCtrlAcc);
+      //st.SyncWritePosEx(jsonID, 5, stepsCtrlBuffer, stepsCtrlSpeed, stepsCtrlAcc);
+      for (uint8_t i=0; i<5; i++)
+      {
+        setTargetJointAngle(jsonID[i],stepsCtrlBuffer[i],stepsCtrlSpeed[i],stepsCtrlAcc[i]);
+      }
       delay(stepT);
     }
-    st.SyncWritePosEx(jsonID, 5, stepsCtrlGoal, stepsCtrlSpeed, stepsCtrlAcc);
+    //st.SyncWritePosEx(jsonID, 5, stepsCtrlGoal, stepsCtrlSpeed, stepsCtrlAcc);
+    for (uint8_t i=0; i<5; i++)
+    {
+      setTargetJointAngle(jsonID[i],stepsCtrlGoal[i],stepsCtrlSpeed[i],stepsCtrlAcc[i]);
+    }
     stepsCtrlLast[0] = stepsCtrlGoal[0];
     stepsCtrlLast[1] = stepsCtrlGoal[1];
     stepsCtrlLast[2] = stepsCtrlGoal[2];
@@ -630,15 +674,46 @@ void configRoArm(){
   int configMove = jsonCmdReceive["P3"].as<int>();
 
   if(configID < 6){
-    if(configType == CONFIG_TORQUE_OFF){st.EnableTorque(configID, 0);}
-    else if(configType == CONFIG_TORQUE_ON){st.EnableTorque(configID, 1);}
-    else if(configType == CONFIG_MOVE){st.WritePosEx(configID, configMove, 500, 50);}
-    else if(configType == CONFIG_SET_MIDDLE){st.CalibrationOfs(configID);}
+    if(configType == CONFIG_TORQUE_OFF)
+    {
+      //st.EnableTorque(configID, 0);
+      servoTorque(configID, 0);
+
+    }
+    else if(configType == CONFIG_TORQUE_ON)
+    {
+      //st.EnableTorque(configID, 1);
+      servoTorque(configID, 1);
+    }
+    else if(configType == CONFIG_MOVE)
+    {
+      //st.WritePosEx(configID, configMove, 500, 50);
+      setTargetJointAngle(configID, configMove, 500, 50);
+    }
+    else if(configType == CONFIG_SET_MIDDLE)
+    {
+      //st.CalibrationOfs(configID);
+      setMiddle(configID);
+    }
   }
-  else{
-    if(configID == CONFIG_ALL_INIT){st.SyncWritePosEx(jsonID, 5, jsonMiddlePos, jsonMiddleSpd, jsonAccCtrl);}
-    else if(configID == CONFIG_TORQUE_ALL_OFF){torqueAll(false);}
-    else if(configID == CONFIG_TORQUE_ALL_ON){torqueAll(true);}
+  else
+  {
+    if(configID == CONFIG_ALL_INIT)
+    {
+      //st.SyncWritePosEx(jsonID, 5, jsonMiddlePos, jsonMiddleSpd, jsonAccCtrl);
+      for (uint8_t i=0; i<5; i++)
+      {
+        setTargetJointAngle(jsonID[i],jsonMiddlePos[i],jsonMiddleSpd[i],jsonAccCtrl[i]);
+      }
+    }
+    else if(configID == CONFIG_TORQUE_ALL_OFF)
+    {
+      torqueAll(false);
+    }
+    else if(configID == CONFIG_TORQUE_ALL_ON)
+    {
+      torqueAll(true);
+    }
   }
 }
 
@@ -663,6 +738,9 @@ void cmdHandler(){
     case    RECORD_REPLAY:Serial.println("RECORD_REPLAY");break;
     case  ROARM_M1_CONFIG:Serial.println("ROARM_M1_CONFIG");break;
     case             HELP:Serial.println("HELP");break;
+    case SET_MAX_TORQUE:Serial.println("SET_MAX_TORQUE");break;
+    case SET_PWM:Serial.println("SET_PWM");break;
+    case SET_LED:Serial.println("SET_LED");break;
   }
 
   processType = cmdType;

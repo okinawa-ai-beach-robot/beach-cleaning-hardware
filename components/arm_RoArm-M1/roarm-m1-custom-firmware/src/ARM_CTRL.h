@@ -130,11 +130,12 @@ s16 servoPosRead[5]  = {MiddlePos, MiddlePos, MiddlePos, MiddlePos, MiddlePos};
 
 
 void torqueCtrlAll(u8 enableCMD){
-  st.EnableTorque(1, enableCMD);
-  st.EnableTorque(2, enableCMD);
-  st.EnableTorque(3, enableCMD);
-  st.EnableTorque(4, enableCMD);
-  st.EnableTorque(5, enableCMD);
+  
+  servoTorque(1, enableCMD);
+  servoTorque(2, enableCMD);
+  servoTorque(3, enableCMD);
+  servoTorque(4, enableCMD);
+  servoTorque(5, enableCMD);
   if(enableCMD){
     torqueLockStatus = true;
   }
@@ -473,7 +474,11 @@ void ctrlMove(){
   STPos[1] = (int)(angleGenOut(STDirection[1]*InfoBuffer[angle_2]+15)*3 + 0.5);
   STPos[2] = (int)(angleGenOut(STDirection[2]*InfoBuffer[angle_3]+180)  + 0.5);
   STPos[3] = (int)(angleGenOut(STDirection[3]*InfoBuffer[angle_4]+180)  + 0.5);
-  st.SyncWritePosEx(STID, 4, STPos, STSpd, STAc);
+  //st.SyncWritePosEx(STID, 4, STPos, STSpd, STAc);
+  for (uint8_t i=0; i<4; i++)
+  {
+    setTargetJointAngle(STID[i],STPos[i],STSpd[i], STAc[i]);
+  }
 }
 
 
@@ -686,10 +691,11 @@ void allAxisCtrl(float cmdX, float cmdY, float cmdZ, float cmdTheta){
 
 // get the position by moving the servos.
 void allPosGet(){
-  if(st.FeedBack(1)!=-1){servoPosRead[0] = st.ReadPos(-1);}
-  if(st.FeedBack(2)!=-1){servoPosRead[1] = st.ReadPos(-1);}
-  if(st.FeedBack(3)!=-1){servoPosRead[2] = st.ReadPos(-1);}
-  if(st.FeedBack(4)!=-1){servoPosRead[3] = st.ReadPos(-1);}
+
+  if(getFeedBack(1)){servoPosRead[0] = posRead[1];}
+  if(getFeedBack(2)){servoPosRead[1] = posRead[2];}
+  if(getFeedBack(3)){servoPosRead[2] = posRead[3];}
+  if(getFeedBack(4)){servoPosRead[3] = posRead[4];}
 }
 
 

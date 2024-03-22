@@ -306,6 +306,10 @@ void cmdProcess(){
     case    RECORD_REPLAY:recordReplay();processType = -1;break;
     case  ROARM_M1_CONFIG:configRoArm();processType = -1;break;
     case             HELP:getHelp();processType = -1;break;
+      
+    case SET_MAX_TORQUE:set_max_torque();processType = -1;break;
+    case SET_PWM:/*set_pwm();*/processType = -1;break;
+    case SET_LED:set_led();processType = -1;break;
 
     case               -1:delay(3);
   }

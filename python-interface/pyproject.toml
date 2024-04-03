@@ -1,3 +1,11 @@
+[build-system]
+requires = ["setuptools>=45",
+"wheel",
+"setuptools_scm[toml]>=6.2",
+]
+build-backend = 'setuptools.build_meta'
+
+
 [project]
 name =  "beachbot"
 version = "0.0.1"
@@ -20,11 +28,13 @@ license = { text = "TBD" }
 dependencies = [
     "numpy",
     "pyserial",
-    "scipy"
+    "scipy",
+    "opencv-python",
+    "pyyaml",
+    "onnxruntime",
+    "matplotlib"
 ]
 requires-python = ">=3.8.1"
-
-
 
 [project.urls]
 Documentation = "https://TODO"
@@ -32,16 +42,8 @@ Source = "https://TODO"
 Tracker = "https://TODO"
 
 
-[build-system]
-requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
-build-backend = 'setuptools.build_meta'
-
-
-
-
 [tool.setuptools]
 package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-

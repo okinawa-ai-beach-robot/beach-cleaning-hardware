@@ -2,6 +2,7 @@ from flask import Flask, render_template, request
 from beachbot.manipulators import Motor
 import Jetson.GPIO as GPIO
 import time
+from jetson_utils import videoSource, videoOutput, Log
 
 app = Flask(__name__)
 
@@ -15,6 +16,20 @@ motor1 = Motor(pwm_pins[0], gpio_pins[0], gpio_pins[1], _frequency_hz)
 motor2 = Motor(pwm_pins[1], gpio_pins[2], gpio_pins[3], _frequency_hz)
 
 sleep_time = 0.1
+
+# create video sources & outputs
+input = videoSource("csi://0", options={"width": 1280, "height": 800, "framerate": 30})
+output = videoOutput(
+    "webrtc://@:1234/my_stream",
+    [
+        'options={"width": 1280, "height": 800, "framerate": 30}',
+        "--headless",
+        "--output-save=./video_tmp.mp4",
+    ],
+)
+
+# capture frames until EOS or user exits
+numFrames = 0
 
 
 def cleanup():
@@ -74,3 +89,30 @@ def backward():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+    while True:
+        # capture the next image
+        img = input.Capture()
+
+        if img is None:  # timeout
+            continue
+
+        if numFrames % 25 == 0 or numFrames < 15:
+            Log.Verbose(
+                f"video-viewer:  captured {numFrames} frames ({img.width} x {img.height})"
+            )
+
+        numFrames += 1
+
+        # render the image
+        output.Render(img)
+
+        # update the title bar
+        output.SetStatus(
+            "Video Viewer | {:d}x{:d} | {:.1f} FPS".format(
+                img.width, img.height, output.GetFrameRate()
+            )
+        )
+
+        # exit on input/output EOS
+        if not input.IsStreaming() or not output.IsStreaming():
+            break

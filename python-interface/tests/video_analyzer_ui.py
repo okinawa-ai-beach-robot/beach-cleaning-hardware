@@ -131,3 +131,14 @@ with ui.row().classes('w-full'):
 #ui.timer(interval=0.1, callback=lambda: video_image.set_source(f'/video/frame?{time.time()}'))
 
 ui.run(title="Beachbot Video Analyzer", port=4321)
+
+
+# vidcap = cv2.VideoCapture("myvideo.mp4")
+# # get total number of frames
+# totalFrames = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)
+# randomFrameNumber=random.randint(0, totalFrames)
+# # set frame position
+# vidcap.set(cv2.CAP_PROP_POS_FRAMES,randomFrameNumber)
+# success, image = vidcap.read()
+# if success:
+#     cv2.imwrite("random_frame.jpg", image)

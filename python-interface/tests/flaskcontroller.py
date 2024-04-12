@@ -18,18 +18,15 @@ motor2 = Motor(pwm_pins[1], gpio_pins[2], gpio_pins[3], _frequency_hz)
 sleep_time = 0.1
 
 # create video sources & outputs
-input = videoSource("csi://0", options={"width": 1280, "height": 800, "framerate": 30})
+input = videoSource("csi://0", options={"width": 1280, "height": 800, "framerate": 15})
 output = videoOutput(
     "webrtc://@:1234/my_stream",
     [
-        'options={"width": 1280, "height": 800, "framerate": 30}',
+        'options={"width": 1280, "height": 800, "framerate": 15}',
         "--headless",
         "--output-save=./video_tmp.mp4",
     ],
 )
-
-# capture frames until EOS or user exits
-numFrames = 0
 
 
 def cleanup():
@@ -86,10 +83,13 @@ def backward():
     motor2.change_speed(-int(speed))
     return f"Speed changed to {speed}"
 
+import threading
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
-    while True:
+def video_loop():
+
+    # capture frames until EOS or user exits
+    numFrames = 0
+    while numFrames < 1000:
         # capture the next image
         img = input.Capture()
 
@@ -116,3 +116,9 @@ if __name__ == "__main__":
         # exit on input/output EOS
         if not input.IsStreaming() or not output.IsStreaming():
             break
+
+if __name__ == "__main__":
+
+    x = threading.Thread(target=video_loop)
+    x.start()
+    app.run(host="0.0.0.0", port=5000)

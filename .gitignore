@@ -21,3 +21,4 @@ python-interface/src/beachbot/platforms/trackedchassis.py
 
 components/servo_driver/SC_Servo_demo
 components/arm_RoArm-M1/test/
+python-interface/tests/*.mp4

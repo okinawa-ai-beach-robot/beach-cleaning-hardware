@@ -41,7 +41,7 @@
 
         function sendCommand(direction, speed) {
             var xhr = new XMLHttpRequest();
-            xhr.open('POST', 'http://10.24.66.8:5000/' + direction, true);
+            xhr.open('POST', 'http://10.42.0.1:5000/' + direction, true);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
             xhr.send('speed=' + speed);
         }

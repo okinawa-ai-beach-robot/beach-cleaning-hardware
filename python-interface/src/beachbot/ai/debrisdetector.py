@@ -41,7 +41,7 @@ class DerbrisDetector():
             image = image[:, crop_w // 2 : -crop_w // 2]
         return image
     
-    def wrap_detection(self, output_data):
+    def wrap_detection(self, output_data, confidence_threshold=0.2, class_threshold=0.25):
         class_ids = []
         confidences = []
         boxes = []
@@ -54,12 +54,12 @@ class DerbrisDetector():
             row = output_data[r]
             confidence = row[4]
 
-            if confidence >= 0.2:
+            if confidence >= confidence_threshold:
 
                 classes_scores = row[5:]
                 class_id = np.argmax(classes_scores)
 
-                if classes_scores[class_id] > 0.25:
+                if classes_scores[class_id] > class_threshold:
                     confidences.append(confidence)
 
                     class_ids.append(class_id)
@@ -72,7 +72,7 @@ class DerbrisDetector():
                     box = np.array([left, top, width, height])
                     boxes.append(box)
 
-        indexes = cv.dnn.NMSBoxes(boxes, confidences, 0.25, 0.45)
+        indexes = cv.dnn.NMSBoxes(boxes, confidences, confidence_threshold, 0.45)
 
         result_class_ids = []
         result_confidences = []
@@ -85,7 +85,57 @@ class DerbrisDetector():
 
         return result_class_ids, result_confidences, result_boxes
 
+
     
+    def wrap_detection_percent(self, output_data, confidence_threshold=0.2, class_threshold=0.25):
+        class_ids = []
+        confidences = []
+        boxes = []
+        rows = output_data.shape[0]
+
+        x_factor = 1/self.img_width
+        y_factor = 1/self.img_height
+
+        for r in range(rows):
+            row = output_data[r]
+            confidence = row[4]
+
+            if confidence >= confidence_threshold:
+                classes_scores = row[5:]
+                class_id = np.argmax(classes_scores)
+
+                if classes_scores[class_id] > class_threshold:
+                    confidences.append(confidence)
+
+                    class_ids.append(class_id)
+
+                    x, y, w, h = row[0].item(), row[1].item(), row[2].item(), row[3].item()
+                    left = ((x - 0.5 * w) * x_factor)
+                    top = ((y - 0.5 * h) * y_factor)
+                    width = (w * x_factor)
+                    height = (h * y_factor)
+                    box = np.array([left, top, width, height])
+                    boxes.append(box)
+                else:
+                    pass
+                    #print("Class score not above threshold:", classes_scores[class_id])
+            else:
+                pass
+                #print("Confidence score not above threshold:", confidence)
+
+        indexes = cv.dnn.NMSBoxes(boxes, confidences, confidence_threshold, 0.45)
+
+        result_class_ids = []
+        result_confidences = []
+        result_boxes = []
+
+        for i in indexes:
+            result_confidences.append(confidences[i])
+            result_class_ids.append(class_ids[i])
+            result_boxes.append(boxes[i])
+
+        return result_class_ids, result_confidences, result_boxes
+ 
     def apply_model(self, inputs):
         raise NotImplementedError
     

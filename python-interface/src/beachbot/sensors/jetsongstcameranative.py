@@ -3,6 +3,7 @@ import os, threading
 try:
     from jetson_utils import videoSource, videoOutput
     from jetson_utils import cudaImage, cudaToNumpy
+    import jetson_utils
 except ModuleNotFoundError as ex:
     print(
         "Jetson utils not installed or not available!\nJetsonGstCameraNative not available!"
@@ -10,10 +11,9 @@ except ModuleNotFoundError as ex:
 
 
 class JetsonGstCameraNative:
-    def __init__(self, width=1920, height=1080, fps=30, dev_id=0) -> None:
-        self._camera = videoSource("csi://" + str(dev_id))
-        # TODO read docs on how to set resolution with this interface
-        print("TODO fps and resolution swtich not yet implemented -> TODO check docs!!")
+    def __init__(self, width=1280, height=720, fps=15, dev_id=0) -> None:
+        self._camera = videoSource("csi://" + str(dev_id), options={"width": width, "height": height, "framerate": fps, "numBuffers": 2, "flipMethod": "vertical-flip"})
+        self.bgr_img = jetson_utils.cudaAllocMapped(width=width, height=height, format="bgr8")
 
     @staticmethod
     def list_cameras():
@@ -22,7 +22,11 @@ class JetsonGstCameraNative:
 
     def read(self):
         cuda_img = self._camera.Capture()
-        self._frame = cudaToNumpy(cuda_img)
+        jetson_utils.cudaConvertColor(cuda_img, self.bgr_img)
+        self._frame = jetson_utils.cudaToNumpy(self.bgr_img)
+        jetson_utils.cudaDeviceSynchronize()
+
+        #self._frame = cudaToNumpy(cuda_img, isBGR=True)
         return self._frame
 
     def stop(self):

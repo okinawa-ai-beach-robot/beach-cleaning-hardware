@@ -27,9 +27,17 @@ class Yolo5Onnx(DerbrisDetector):
         elif "float32" in input_type:
             self.dtype=np.float32
 
-    def apply_model(self, inputs):  
+    def apply_model(self, inputs, confidence_threshold=0.2, class_threshold=0.25):  
         inputs = np.swapaxes(np.swapaxes(inputs, 0, -1), -2, -1)[None, :, :, :] / 255.0
         if inputs.dtype != self.dtype:
             inputs = inputs.astype(self.dtype)
         prediction = self.session.run(None, {"images": inputs})
-        return self.wrap_detection(prediction[0][0])
+        return self.wrap_detection(prediction[0][0], confidence_threshold=confidence_threshold, class_threshold=class_threshold)
+
+    def apply_model_percent(self, inputs, confidence_threshold=0.2, class_threshold=0.25):  
+        inputs = np.swapaxes(np.swapaxes(inputs, 0, -1), -2, -1)[None, :, :, :] / 255.0
+        if inputs.dtype != self.dtype:
+            inputs = inputs.astype(self.dtype)
+        prediction = self.session.run(None, {"images": inputs})
+        return self.wrap_detection_percent(prediction[0][0], confidence_threshold=confidence_threshold, class_threshold=class_threshold)
+    

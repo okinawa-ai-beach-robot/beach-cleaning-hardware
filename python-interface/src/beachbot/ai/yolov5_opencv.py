@@ -38,7 +38,7 @@ class Yolo5OpenCV(DerbrisDetector):
         # elif "float32" in input_type:
         #     self.dtype=np.float32
 
-    def apply_model(self, inputs):  
+    def apply_model(self, inputs, confidence_threshold=0.2, class_threshold=0.25):  
         row, col, _ = inputs.shape
         _max = max(col, row)
         result = np.zeros((_max, _max, 3), np.uint8)
@@ -49,4 +49,17 @@ class Yolo5OpenCV(DerbrisDetector):
 
         prediction = self.net.forward()
         print(prediction)
-        return self.wrap_detection(prediction[0])
+        return self.wrap_detection(prediction[0], confidence_threshold=confidence_threshold, class_threshold=class_threshold)
+    
+    def apply_model_percent(self, inputs, confidence_threshold=0.2, class_threshold=0.25):  
+        row, col, _ = inputs.shape
+        _max = max(col, row)
+        result = np.zeros((_max, _max, 3), np.uint8)
+        result[0:row, 0:col] = inputs
+        scale = 1.0/255.0 # convert byte color 0-255 to float value range 0-1
+        blob = cv2.dnn.blobFromImage(result, scale, (self.img_width,self.img_heigt), (0,0,0), True, crop=False)
+        self.net.setInput(blob)
+
+        prediction = self.net.forward()
+        return self.wrap_detection_percent(prediction[0], confidence_threshold=confidence_threshold, class_threshold=class_threshold)
+    

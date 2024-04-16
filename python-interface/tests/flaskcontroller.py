@@ -3,6 +3,7 @@ from beachbot.manipulators import Motor
 import Jetson.GPIO as GPIO
 import time
 from jetson_utils import videoSource, videoOutput, Log
+import threading
 
 app = Flask(__name__)
 
@@ -83,7 +84,6 @@ def backward():
     motor2.change_speed(-int(speed))
     return f"Speed changed to {speed}"
 
-import threading
 
 def video_loop():
 
@@ -116,6 +116,7 @@ def video_loop():
         # exit on input/output EOS
         if not input.IsStreaming() or not output.IsStreaming():
             break
+
 
 if __name__ == "__main__":
 

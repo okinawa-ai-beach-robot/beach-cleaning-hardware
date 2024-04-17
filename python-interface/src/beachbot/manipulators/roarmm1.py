@@ -232,7 +232,7 @@ class RoArmM1(threading.Thread):
         return res
 
     def record_trajectory(
-        self, resample_steps=-1, wait_time_max=10, max_record_steps=250
+        self, resample_steps=-1, wait_time_max=10, max_record_steps=250, save_path=None
     ):
         self.set_joints_enabled(False)
         time.sleep(0.5)
@@ -267,6 +267,9 @@ class RoArmM1(threading.Thread):
             ts_resample[-1, :] = ts[-1, :]
             ts = ts_resample
 
+        if save_path:
+            np.savez(save_path, qs=qs, taus=taus, ts=ts)
+
         return qs, taus, ts
 
     def replay_trajectory(self, qs, ts=None, freq=20):
@@ -288,6 +291,10 @@ class RoArmM1(threading.Thread):
 
             if wtime > 0:
                 time.sleep(wtime)
+
+    def go_home(self):
+        self.set_joint_targets(self.q_home)
+        time.sleep(1)
 
     def fkin(self, qs):
         """

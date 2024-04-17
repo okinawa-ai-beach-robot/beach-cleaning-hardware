@@ -4,7 +4,7 @@ import time
 arm1 = RoArmM1()
 arm1.refresh_robot_state()
 arm1.go_home()
-qs, taus, ts = arm1.record_trajectory(wait_time_max=3, save_path="toss_path")
+qs, taus, ts = arm1.record_trajectory(wait_time_max=3, save_path="./pickup_path")
 print("Recoding entries:", qs.shape[0])
 print("Recoding duration:", ts[-1])
 # qs: joint angles

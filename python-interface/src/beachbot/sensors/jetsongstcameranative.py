@@ -1,4 +1,5 @@
 import os, threading
+import cv2
 
 try:
     from jetson_utils import videoSource, videoOutput
@@ -23,8 +24,9 @@ class JetsonGstCameraNative:
     def read(self):
         cuda_img = self._camera.Capture()
         jetson_utils.cudaConvertColor(cuda_img, self.bgr_img)
-        self._frame = jetson_utils.cudaToNumpy(self.bgr_img)
+        bgr_frame = jetson_utils.cudaToNumpy(self.bgr_img)
         jetson_utils.cudaDeviceSynchronize()
+        self._frame = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2RGB)
 
         #self._frame = cudaToNumpy(cuda_img, isBGR=True)
         return self._frame

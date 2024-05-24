@@ -16,7 +16,7 @@ def gstreamer_pipeline_builder(
     capture_height=1080,
     display_width=-1,
     display_height=-1,
-    framerate=30,
+    framerate=15,
     flip_method=0,
 ):
     return (
@@ -39,7 +39,7 @@ def gstreamer_pipeline_builder(
 
 
 class JetsonCsiCameraOpenCV(threading.Thread):
-    def __init__(self, width=1280, height=720, fps=30, dev_id=0) -> None:
+    def __init__(self, width=1280, height=720, fps=15, dev_id=0) -> None:
         # Init superclass thread
         super().__init__()
         # do not block on exit:
@@ -73,8 +73,8 @@ class JetsonCsiCameraOpenCV(threading.Thread):
     def run(self):
         while not self._stopped:
             # TODO check: self._cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-            self.ret_val, self._frame = self._cap.read()
-            #self._frame = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2RGB)
+            self.ret_val, bgr_frame = self._cap.read()
+            self._frame = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2RGB)
         self._cap.release()
 
     def read(self):

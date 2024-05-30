@@ -1,6 +1,13 @@
 import time
 import math
-import Jetson.GPIO as GPIO
+
+try:
+    import Jetson.GPIO as GPIO
+except ModuleNotFoundError as ex:
+    print(
+        "Jetson GPIO library not installed or not available!\nMotor interface may not be available!"
+    )
+
 
 
 class Motor:

@@ -4,13 +4,13 @@ import numpy as np
 
 
 class Yolo5Onnx(DerbrisDetector):
-    def __init__(self, model_file) -> None:
+    def __init__(self, model_file, use_accel=True) -> None:
         super().__init__(model_file)
         providers=["CPUExecutionProvider"]
-        if 'TensorrtExecutionProvider' in onnxruntime.get_available_providers():
+        if use_accel and 'TensorrtExecutionProvider' in onnxruntime.get_available_providers():
             print("TODO: Ignore Tensorrt for now!!")
             providers=["CUDAExecutionProvider"]
-        elif 'CUDAExecutionProvider' in onnxruntime.get_available_providers():
+        elif use_accel and 'CUDAExecutionProvider' in onnxruntime.get_available_providers():
             providers=["CUDAExecutionProvider"]
         else:
             print("No Gpu acceleration availabe!")

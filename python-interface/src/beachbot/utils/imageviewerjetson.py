@@ -3,7 +3,7 @@ try:
     from jetson_utils import cudaFromNumpy
 except ModuleNotFoundError as ex:
     print(
-        "Jetson utils not installed or not available!\nJetsonGstCameraNative not available!"
+        "Jetson utils not installed or not available!\nImageViewerJetson not available!"
     )
 
 

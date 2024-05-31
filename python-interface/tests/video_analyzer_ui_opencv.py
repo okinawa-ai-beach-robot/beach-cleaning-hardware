@@ -2,7 +2,10 @@
 import base64
 import signal
 import time
+import os
+import sys
 from datetime import datetime
+import time
 
 import cv2
 import numpy as np
@@ -12,8 +15,19 @@ from nicegui import Client, app, core, run, ui
 
 import beachbot
 
-vid_file = "/home/beachbot/Data/video_beach_test.mp4"
-model_file = "/home/beachbot/src/beach-cleaning-object-detection/Models/beachbot_yolov5s_beach-cleaning-object-detection__v2i__yolov5pytorch_1280/best.onnx"
+
+
+
+detect_timer =beachbot.utils.Timer()
+read_timer = beachbot.utils.Timer()
+preprocess_timer = beachbot.utils.Timer()
+
+
+
+
+vid_file = beachbot.get_data_path()+os.path.sep+"video_beach_test.mp4"
+model_file = beachbot.get_model_path()+os.path.sep+"beachbot_yolov5s_beach-cleaning-object-detection__v3-augmented_ver__2__yolov5pytorch_1280"+os.path.sep+"best.onnx"
+
 
 ai_detect = beachbot.ai.Yolo5OpenCV(model_file=model_file)
 
@@ -33,6 +47,14 @@ totalFrames = video_capture.get(cv2.CAP_PROP_FRAME_COUNT)
 print("Open video")
 video_capture.set(cv2.CAP_PROP_POS_FRAMES,0)
 success, frame = video_capture.read()
+if not success:
+    print("Video file could not be loaded:")
+    sys.exit(-1)
+
+img_width = frame.shape[1]
+img_height = frame.shape[0]
+print("Video loaded, resolution is", str(img_width)+"x"+str(img_height))
+
 print("Load AI model")
 class_threshold=0.25
 confidence_threshold=0.2
@@ -48,47 +70,39 @@ def convert(frame: np.ndarray) -> bytes:
     return imencode_image.tobytes()
 
 
-@app.get('/video/frame')
-# Thanks to FastAPI's `app.get`` it is easy to create a web route which always provides the latest image from OpenCV.
-async def grab_video_frame() -> Response:
-    if video_capture is None or not video_capture.isOpened():
-        return placeholder
-    # The `video_capture.read` call is a blocking function.
-    # So we run it in a separate thread (default executor) to avoid blocking the event loop.
-    _, frame = await run.io_bound(video_capture.read)
-    if frame is None:
-        return placeholder
-    # `convert` is a CPU-intensive function, so we run it in a separate process to avoid blocking the event loop and GIL.
-    jpeg = await run.cpu_bound(convert, frame)
-    return Response(content=jpeg, media_type='image/jpeg')
 
-
-def add_imgbox(pleft=0, ptop=0, w=0, h=0):
+def add_imgbox(pleft=0, ptop=0, w=0, h=0, clsstr=None):
     # color = 'SkyBlue'
     color = '#FF0000' 
     image.content += f'<rect x="{pleft*100}%" y="{ptop*100}%" ry="15" height="{h*100}%" width="{w*100}%" fill="none" stroke="{color}" stroke-width="4" />'
+    if clsstr is not None:
+        image.content += f'<text text-anchor="start" x="{pleft*100}%" y="{ptop*100}%" stroke="{color}" font-size="2em">{clsstr}</text>'
     
 def rframe(fnum=0):
     video_capture.set(cv2.CAP_PROP_POS_FRAMES,int(fnum))
-    succ, frame = video_capture.read()
-    frame = ai_detect.crop_and_scale_image(frame)
+    
+    with read_timer as t:
+        succ, frame = video_capture.read()
+        
+    with preprocess_timer as t:
+        frame = ai_detect.crop_and_scale_image(frame)
+
     confidence_threshold = slider_th.value/1000.0
     class_threshold = slider_clsth.value/1000.0
-    print("Detect with", confidence_threshold, "and", class_threshold)
-    class_ids, confidences, boxes = ai_detect.apply_model_percent(frame, confidence_threshold=confidence_threshold, class_threshold=class_threshold)
+
+    with detect_timer as t:
+        class_ids, confidences, boxes = ai_detect.apply_model_percent(frame, confidence_threshold=confidence_threshold, class_threshold=class_threshold)
+
     image.content = ""
     for classid, confidence, box in zip(class_ids, confidences, boxes):
         if confidence >= 0.01:
             add_imgbox(*box)
-            
-
     #print(obj_res)
     return succ, frame
 
 @app.get('/file/frame')
 # Thanks to FastAPI's `app.get`` it is easy to create a web route which always provides the latest image from OpenCV.
 async def grab_file_frame(fnum=0) -> Response:
-    print("in")
     if video_capture is None or not video_capture.isOpened():
         return placeholder
     # The `video_capture.read` call is a blocking function.
@@ -98,6 +112,10 @@ async def grab_file_frame(fnum=0) -> Response:
         return placeholder
     # `convert` is a CPU-intensive function, so we run it in a separate process to avoid blocking the event loop and GIL.
     jpeg = await run.cpu_bound(convert, frame)
+
+    print("Read stat:", read_timer)
+    print("Preprocess stat:", preprocess_timer)
+    print("Detect stat:", detect_timer)
     
     return Response(content=jpeg, media_type='image/jpeg')
 
@@ -133,19 +151,15 @@ signal.signal(signal.SIGINT, handle_sigint)
 
 
 
-dt = datetime.now()
 
 async def handle_connection(cl : Client):
-    global dt
-    dt = datetime.now()
     await cl.connected()
     res = await cl.run_javascript("[window.screen.width,window.screen.height]")
 
-    print(dt, res)
+
 def handle_start():
-    global dt
     dt = datetime.now()
-    print(dt, "start")
+
 app.on_connect(handle_connection)
 app.on_startup(handle_start)
 
@@ -161,7 +175,7 @@ with ui.left_drawer().classes('bg-blue-100') as left_drawer:
     ui.label('Configure:')
     with ui.card().classes('w-full'):
         lbl1 = ui.label('System:')
-        ui.button('Shut Down', on_click=lambda: ui.label('Please Wait'))
+        ui.button('Shut Down', on_click=lambda: os.app.shutdown())
         ui.separator()
         ui.switch("1")
         ui.switch("2")
@@ -174,7 +188,7 @@ with ui.page_sticky(position='bottom-right', x_offset=20, y_offset=20):
 
 
 with ui.row().classes('w-full'):
-    with ui.card().style('width: 90%'):
+    with ui.card().style('max-width: 90%;'):
         def up_img(obj : ui.interactive_image, pleft=0, ptop=0, w=25, h=25, val=0):
             #color = 'SkyBlue'
             #color = '#FF0000' 
@@ -182,7 +196,7 @@ with ui.row().classes('w-full'):
             #obj.set_source(f'/video/frame?{time.time()}')
             obj.set_source(f'/file/frame?fnum={val}&t={time.time()}')
         ui.label('Video Analyzer:')
-        image = ui.interactive_image(source="https://picsum.photos/id/684/640/360",size=(512,512)).style('width: 100%')
+        image = ui.interactive_image(source="file/frame?fnum=0",size=(img_width,img_height)).style('width: 100%')
         slider = ui.slider(min=0, max=totalFrames, value=0, on_change=lambda x: up_img(image, val=x.value))
         ui.label().bind_text_from(slider, 'value', backward=lambda a: f'Frame {a} of {totalFrames}')
         slider_th = ui.slider(min=1, max=500, value=200, on_change=lambda x: up_img(image, val=slider.value))
@@ -190,21 +204,8 @@ with ui.row().classes('w-full'):
         slider_clsth = ui.slider(min=1, max=500, value=250, on_change=lambda x: up_img(image, val=slider.value))
         ui.label().bind_text_from(slider_clsth, 'value', backward=lambda a: f'Class threshold is {a/1000.0}')
 
-        #ui.timer(1.0, lambda: up_img(image))
 
-        
-
-#ui.timer(interval=0.1, callback=lambda: video_image.set_source(f'/video/frame?{time.time()}'))
-
+beachbot.utils.kill_by_port(4321)
 ui.run(title="Beachbot Video Analyzer", port=4321)
 
 
-# vidcap = cv2.VideoCapture("myvideo.mp4")
-# # get total number of frames
-# totalFrames = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)
-# randomFrameNumber=random.randint(0, totalFrames)
-# # set frame position
-# vidcap.set(cv2.CAP_PROP_POS_FRAMES,randomFrameNumber)
-# success, image = vidcap.read()
-# if success:
-#     cv2.imwrite("random_frame.jpg", image)

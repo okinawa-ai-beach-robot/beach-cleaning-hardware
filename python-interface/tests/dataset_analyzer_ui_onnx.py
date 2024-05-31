@@ -22,10 +22,8 @@ detect_timer =beachbot.utils.Timer()
 read_timer = beachbot.utils.Timer()
 preprocess_timer = beachbot.utils.Timer()
 
-
-
-
-vid_file = beachbot.get_data_path()+os.path.sep+"video_beach_test.mp4"
+dataset = beachbot.ai.Dataset(beachbot.ai.Dataset.list_dataset_paths()[0])
+print("Loaded", len(dataset.images), " samples from dataset")
 model_file = beachbot.get_model_path()+os.path.sep+"beachbot_yolov5s_beach-cleaning-object-detection__v3-augmented_ver__2__yolov5pytorch_1280"+os.path.sep+"best.onnx"
 
 ai_detect = beachbot.ai.Yolo5Onnx(model_file=model_file, use_accel=False)
@@ -34,25 +32,11 @@ ai_detect = beachbot.ai.Yolo5Onnx(model_file=model_file, use_accel=False)
 black_1px = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjYGBg+A8AAQQBAHAgZQsAAAAASUVORK5CYII='
 placeholder = Response(content=base64.b64decode(black_1px.encode('ascii')), media_type='image/png')
 
-
-# OpenCV is used to access the webcam.
-#video_capture = cv2.VideoCapture(0)
-
-video_capture = cv2.VideoCapture(vid_file)
-# # get total number of frames
-totalFrames = video_capture.get(cv2.CAP_PROP_FRAME_COUNT)
-# randomFrameNumber=random.randint(0, totalFrames)
-# # set frame position
-print("Open video")
-video_capture.set(cv2.CAP_PROP_POS_FRAMES,0)
-success, frame = video_capture.read()
-if not success:
-    print("Video file could not be loaded:")
-    sys.exit(-1)
-
+frame = cv2.imread(dataset.images[0])
 img_width = frame.shape[1]
 img_height = frame.shape[0]
-print("Video loaded, resolution is", str(img_width)+"x"+str(img_height))
+print("Image size is", str(img_width)+"x"+str(img_height))
+
 
 print("Load AI model")
 class_threshold=0.25
@@ -61,7 +45,22 @@ frame = ai_detect.crop_and_scale_image(frame)
 class_ids, confidences, boxes = ai_detect.apply_model_percent(frame, confidence_threshold=confidence_threshold, class_threshold=class_threshold)
 print("[ result is: ", [class_ids, confidences, boxes], "]")
 
-print("Prepare serer ...")
+print("Prepare server ...")
+
+def sel_dataset(idx):
+    global dataset, slider, sliderlabel, image
+    dataset = beachbot.ai.Dataset(beachbot.ai.Dataset.list_dataset_paths()[idx.value])
+    print("Loaded", len(dataset.images), " samples from dataset")
+    #slider = ui.slider(min=0, max=len(dataset.images)-1, value=0, on_change=lambda x: up_img(image, val=x.value))
+    slider._props['max'] = len(dataset.images)-1
+    slider.update()
+    slider.set_value(1)
+    sliderlabel.update()
+    slider.set_value(0)
+    up_img(image, val=0)
+    print(slider._props)
+    
+
 
 
 def convert(frame: np.ndarray) -> bytes:
@@ -78,32 +77,31 @@ def add_imgbox(pleft=0, ptop=0, w=0, h=0, clsstr=None):
         image.content += f'<text text-anchor="start" x="{pleft*100}%" y="{ptop*100}%" stroke="{color}" font-size="2em">{clsstr}</text>'
     
 def rframe(fnum=0):
-    video_capture.set(cv2.CAP_PROP_POS_FRAMES,int(fnum))
-    
-    with read_timer as t:
-        succ, frame = video_capture.read()
-        
-    with preprocess_timer as t:
-        frame = ai_detect.crop_and_scale_image(frame)
+    try:
+        with read_timer as t:
+            frame = cv2.imread(dataset.images[int(fnum)])
+        with preprocess_timer as t:
+            frame = ai_detect.crop_and_scale_image(frame)
+        confidence_threshold = slider_th.value/1000.0
+        class_threshold = slider_clsth.value/1000.0
+        print("Detect with", confidence_threshold, "and", class_threshold)
+        with detect_timer as t:
+            class_ids, confidences, boxes = ai_detect.apply_model_percent(frame, confidence_threshold=confidence_threshold, class_threshold=class_threshold)
+        image.content = ""
+        for classid, confidence, box in zip(class_ids, confidences, boxes):
+            if confidence >= 0.01:
+                add_imgbox(*box, dataset.classes[classid])
+        succ=True
+    except Exception as x:
+        succ=False
+            
 
-    confidence_threshold = slider_th.value/1000.0
-    class_threshold = slider_clsth.value/1000.0
-
-    with detect_timer as t:
-        class_ids, confidences, boxes = ai_detect.apply_model_percent(frame, confidence_threshold=confidence_threshold, class_threshold=class_threshold)
-
-    image.content = ""
-    for classid, confidence, box in zip(class_ids, confidences, boxes):
-        if confidence >= 0.01:
-            add_imgbox(*box)
     #print(obj_res)
     return succ, frame
 
 @app.get('/file/frame')
 # Thanks to FastAPI's `app.get`` it is easy to create a web route which always provides the latest image from OpenCV.
 async def grab_file_frame(fnum=0) -> Response:
-    if video_capture is None or not video_capture.isOpened():
-        return placeholder
     # The `video_capture.read` call is a blocking function.
     # So we run it in a separate thread (default executor) to avoid blocking the event loop.
     _, frame = await run.io_bound(lambda : rframe(fnum))
@@ -136,8 +134,7 @@ async def cleanup() -> None:
     # This prevents ugly stack traces when auto-reloading on code change,
     # because otherwise disconnected clients try to reconnect to the newly started server.
     await disconnect()
-    # Release the webcam hardware so it can be used by other applications again.
-    video_capture.release()
+
 
 app.on_shutdown(cleanup)
 # We also need to disconnect clients when the app is stopped with Ctrl+C,
@@ -176,6 +173,8 @@ with ui.left_drawer().classes('bg-blue-100') as left_drawer:
         lbl1 = ui.label('System:')
         ui.button('Shut Down', on_click=lambda: os.app.shutdown())
         ui.separator()
+        data_content = {key:beachbot.ai.Dataset.list_dataset_paths()[key] for key in range(len(beachbot.ai.Dataset.list_dataset_paths()))}
+        ui.select(data_content, value=0, on_change=sel_dataset)
         ui.switch("1")
         ui.switch("2")
         ui.switch("3")
@@ -196,8 +195,8 @@ with ui.row().classes('w-full'):
             obj.set_source(f'/file/frame?fnum={val}&t={time.time()}')
         ui.label('Video Analyzer:')
         image = ui.interactive_image(source="file/frame?fnum=0",size=(img_width,img_height)).style('width: 100%')
-        slider = ui.slider(min=0, max=totalFrames, value=0, on_change=lambda x: up_img(image, val=x.value))
-        ui.label().bind_text_from(slider, 'value', backward=lambda a: f'Frame {a} of {totalFrames}')
+        slider = ui.slider(min=0, max=len(dataset.images)-1, value=0, on_change=lambda x: up_img(image, val=x.value))
+        sliderlabel=ui.label().bind_text_from(slider, 'value', backward=lambda a: f'Frame {a} of {len(dataset.images)}')
         slider_th = ui.slider(min=1, max=500, value=200, on_change=lambda x: up_img(image, val=slider.value))
         ui.label().bind_text_from(slider_th, 'value', backward=lambda a: f'Confidence threshold is {a/1000.0}')
         slider_clsth = ui.slider(min=1, max=500, value=250, on_change=lambda x: up_img(image, val=slider.value))

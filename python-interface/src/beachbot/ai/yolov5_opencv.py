@@ -47,6 +47,7 @@ class Yolo5OpenCV(DerbrisDetector):
         # elif "float32" in input_type:
         #     self.dtype=np.float32
 
+
     def apply_model(self, inputs, confidence_threshold=0.2, class_threshold=0.25):  
         row, col, _ = inputs.shape
         _max = max(col, row)
@@ -57,7 +58,23 @@ class Yolo5OpenCV(DerbrisDetector):
         self.net.setInput(blob)
 
         prediction = self.net.forward()
-        print(prediction)
+        #image was made into square image, here, rescale the box positions and sizes to fit input dimension?
+        for rown in range(prediction.shape[1]):
+            rx = prediction[0][rown][0]
+            ry = prediction[0][rown][1]
+            rw = prediction[0][rown][2]
+            rh = prediction[0][rown][3]
+
+            rxn = (_max/col)*rx
+            ryn = (_max/row)*ry
+            rwn = (_max/col)*rw
+            rhn = (_max/row)*rh
+
+            prediction[0][rown][0] = rxn
+            prediction[0][rown][1] = ryn
+            prediction[0][rown][2] = rwn
+            prediction[0][rown][3] = rhn
+
         return self.wrap_detection(prediction[0], confidence_threshold=confidence_threshold, class_threshold=class_threshold)
     
     def apply_model_percent(self, inputs, confidence_threshold=0.2, class_threshold=0.25):  
@@ -70,6 +87,26 @@ class Yolo5OpenCV(DerbrisDetector):
         self.net.setInput(blob)
 
         prediction = self.net.forward()
+
+        #image was made into square image, here, rescale the box positions and sizes to fit input dimension?
+        for rown in range(prediction.shape[1]):
+            rx = prediction[0][rown][0]
+            ry = prediction[0][rown][1]
+            rw = prediction[0][rown][2]
+            rh = prediction[0][rown][3]
+
+            rxn = (_max/col)*rx
+            ryn = (_max/row)*ry
+            rwn = (_max/col)*rw
+            rhn = (_max/row)*rh
+
+            prediction[0][rown][0] = rxn
+            prediction[0][rown][1] = ryn
+            prediction[0][rown][2] = rwn
+            prediction[0][rown][3] = rhn
+
+
+
         return self.wrap_detection_percent(prediction[0], confidence_threshold=confidence_threshold, class_threshold=class_threshold)
     
 DerbrisDetector.add_model("YOLOv5", Yolo5OpenCV)

@@ -76,7 +76,7 @@ Various examples of how to use the provided packages are located in the folder `
 cd ${HOME}/OIST_BC/beach-cleaning-hardware/python-interface/tests
 python dataset_analyzer_ui.py 
 ```
-It seems that the connection of t he browser to the server is lost some times (TODO), in such case it may help to relod the browser window of to close and reopen a new tab.
+It seems that the connection of the browser to the server is lost some times (TODO), in such case it may help to relod the browser window of to close and reopen a new tab.
 
 
 

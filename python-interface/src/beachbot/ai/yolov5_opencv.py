@@ -8,6 +8,11 @@ from os.path import isfile, join
 import yaml
 
 class Yolo5OpenCV(DerbrisDetector):
+    _description="""
+    YOLOv5 implementation based on OpenCV framework.\n
+    Supports hardware acceleration via CUDA if available on platform.
+    """
+
     def __init__(self, model_file, use_accel=True) -> None:
         super().__init__(model_file)
         model_folder = os.path.dirname(os.path.realpath(model_file))
@@ -67,3 +72,4 @@ class Yolo5OpenCV(DerbrisDetector):
         prediction = self.net.forward()
         return self.wrap_detection_percent(prediction[0], confidence_threshold=confidence_threshold, class_threshold=class_threshold)
     
+DerbrisDetector.add_model("YOLOv5", Yolo5OpenCV)

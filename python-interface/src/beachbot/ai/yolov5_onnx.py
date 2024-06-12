@@ -4,6 +4,12 @@ import numpy as np
 
 
 class Yolo5Onnx(DerbrisDetector):
+    _description="""
+    YOLOv5 implementation based on ONNXruntime framework.\n
+    Supports hardware acceleration via CUDA if available on platform.\n
+    Tensorrt acceleration is not yet implemented.
+    """
+
     def __init__(self, model_file, use_accel=True) -> None:
         super().__init__(model_file)
         providers=["CPUExecutionProvider"]
@@ -40,4 +46,6 @@ class Yolo5Onnx(DerbrisDetector):
             inputs = inputs.astype(self.dtype)
         prediction = self.session.run(None, {"images": inputs})
         return self.wrap_detection_percent(prediction[0][0], confidence_threshold=confidence_threshold, class_threshold=class_threshold)
-    
+
+
+DerbrisDetector.add_model("YOLOv5", Yolo5Onnx)

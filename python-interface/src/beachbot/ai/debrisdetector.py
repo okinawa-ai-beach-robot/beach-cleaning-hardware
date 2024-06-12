@@ -3,7 +3,19 @@ import numpy as np
 import cv2 as cv
 import yaml
 
+
+
+from .. import get_model_path
+
+
+
 class DerbrisDetector():
+    _model_lib={}
+    _description="""
+    Abstract base class of coastal debris classificator.\n
+    can not be used direclty, please use implementation found in sublcasses.
+    """
+
     def __init__(self, model_file=None) -> None:
 
         self.img_height = -1
@@ -159,4 +171,39 @@ class DerbrisDetector():
                 cv.rectangle(image, box, color, 2)
         img2 = image[:, :, ::-1]
         return img2
+    
+    def list_models_by_type(type):
+        print(DerbrisDetector._model_lib)
+        return DerbrisDetector._model_lib.get(type, [])
+
+    def add_model(type, modelcls):
+        curr_list = DerbrisDetector._model_lib.get(type,[])
+        if modelcls not in curr_list:
+            curr_list.append(modelcls)
+            DerbrisDetector._model_lib[type]=curr_list
+            print("Added class", modelcls, "with type", type)
+
+    def list_model_types():
+        return list(DerbrisDetector._model_lib.keys())
+
+    def list_model_paths():
+        base_path=get_model_path()
+        modelfolders = [ f.path for f in os.scandir(base_path) if f.is_dir() ]
+        return modelfolders
+    
+    def get_model_type(modelpath):
+        model_type = None
+        if modelpath is not None:
+            # load files
+            with open(modelpath + os.path.sep + "export_info.yaml", 'r') as stream:
+                export_info = yaml.safe_load(stream)
+                model_type = export_info.get('model_type', "YOLOv5") # for backward-compatibility
+        return model_type
+    
+    def list_models_by_path(modelpath):
+        model_type = DerbrisDetector.get_model_type(modelpath)
+        return DerbrisDetector.list_models_by_type(model_type)
+            
+
+    
 

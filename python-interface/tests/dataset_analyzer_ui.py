@@ -27,7 +27,8 @@ print("Loaded", len(dataset.images), " samples from dataset")
 
 model_paths = beachbot.ai.DerbrisDetector.list_model_paths()
 print("Model paths are", model_paths)
-model_path = beachbot.get_model_path()+os.path.sep+"beachbot_yolov5s_beach-cleaning-object-detection__v3-augmented_ver__2__yolov5pytorch_1280"
+#model_path = beachbot.get_model_path()+os.path.sep+"beachbot_yolov5s_beach-cleaning-object-detection__v3-augmented_ver__2__yolov5pytorch_1280"
+model_path = beachbot.ai.DerbrisDetector.list_model_paths()[0]
 print("Model path is", model_path)
 
 model_file = model_path+os.path.sep+"best.onnx"
@@ -45,7 +46,7 @@ ai_detect = model_cls(model_file=model_file, use_accel=False)
 black_1px = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjYGBg+A8AAQQBAHAgZQsAAAAASUVORK5CYII='
 placeholder = Response(content=base64.b64decode(black_1px.encode('ascii')), media_type='image/png')
 
-frame = cv2.imread(dataset.images[0])
+frame = cv2.imread(dataset.images[0])[..., ::-1]  # OpenCV image (BGR to RGB)
 img_width = frame.shape[1]
 img_height = frame.shape[0]
 print("Image size is", str(img_width)+"x"+str(img_height))
@@ -75,7 +76,7 @@ def sel_dataset(idx):
     
 
 def sel_model(idx, backend_id=0):
-    global model_path, model_file, model_type, model_cls_list, ai_detect, slider
+    global model_path, model_file, model_type, model_cls_list, ai_detect, slider, detect_timer
     if idx is not None:
         model_path = model_paths[idx.value]
     print("Model path is", model_path)
@@ -96,6 +97,8 @@ def sel_model(idx, backend_id=0):
     up_img(image, val=slider.value)
     backend_content={key:model_cls_list[key].__name__ for key in range(len(model_cls_list))}
     sel_backend.set_options(backend_content,value=backend_id)
+    detect_timer = beachbot.utils.Timer()
+
 
 
 
@@ -150,7 +153,8 @@ def add_imgbox(pleft=0, ptop=0, w=0, h=0, clsstr=None):
 def rframe(fnum=0):
     try:
         with read_timer as t:
-            frame = cv2.imread(dataset.images[int(fnum)])
+            frame_bgr=cv2.imread(dataset.images[int(fnum)])
+            frame = frame_bgr[..., ::-1]  # OpenCV image (BGR to RGB)
         with preprocess_timer as t:
             frame = ai_detect.crop_and_scale_image(frame)
         confidence_threshold = slider_th.value/1000.0
@@ -161,14 +165,14 @@ def rframe(fnum=0):
         image.content = ""
         for classid, confidence, box in zip(class_ids, confidences, boxes):
             if confidence >= 0.01:
-                add_imgbox(*box, dataset.classes[classid])
+                add_imgbox(*box, ai_detect.list_classes[classid])
         succ=True
     except Exception as x:
         succ=False
             
 
     #print(obj_res)
-    return succ, frame
+    return succ, frame_bgr
 
 @app.get('/file/frame')
 # Thanks to FastAPI's `app.get`` it is easy to create a web route which always provides the latest image from OpenCV.
@@ -184,6 +188,8 @@ async def grab_file_frame(fnum=0) -> Response:
     print("Read stat:", read_timer)
     print("Preprocess stat:", preprocess_timer)
     print("Detect stat:", detect_timer)
+    update_chart()
+
     
     return Response(content=jpeg, media_type='image/jpeg')
 
@@ -252,6 +258,36 @@ with ui.left_drawer().classes('bg-blue-100') as left_drawer:
         lbl4 = ui.label('Backend:')
         backend_content={key:model_cls_list[key].__name__ for key in range(len(model_cls_list))}
         sel_backend=ui.select(backend_content, value=0, on_change=sel_backend)
+        lbl5 = ui.label('Timing analysis:')
+        chart = ui.highchart({
+            'title': False,
+            'chart': {'type': 'bar'},
+            'xAxis': {'categories': ['Read', 'Preprocess', 'Detect']},
+            'yAxis':{'title': {'text': 'seconds'}},
+            'series': [
+                {'name': 'Current Model', 'data': [read_timer.get_mean(), preprocess_timer.get_mean(), detect_timer.get_mean()]},
+                {
+                    'name': 'Current Model errorbar',
+                    'type': 'errorbar',
+                    #'yAxis': 1,
+                    'data': [
+                        [read_timer.get_mean()-read_timer.get_variance(), read_timer.get_mean()+read_timer.get_variance()],
+                        [preprocess_timer.get_mean()-preprocess_timer.get_variance(), preprocess_timer.get_mean()+preprocess_timer.get_variance()],
+                        [detect_timer.get_mean()-detect_timer.get_variance(), detect_timer.get_mean()+detect_timer.get_variance()]
+                    ]
+                },
+            ],
+            
+        }).classes('w-full h-64')
+        def update_chart():
+            chart.options['series'][0]['data']=[read_timer.get_mean(), preprocess_timer.get_mean(), detect_timer.get_mean()]
+            chart.options['series'][1]['data']=[
+                        [read_timer.get_mean()-read_timer.get_variance(), read_timer.get_mean()+read_timer.get_variance()],
+                        [preprocess_timer.get_mean()-preprocess_timer.get_variance(), preprocess_timer.get_mean()+preprocess_timer.get_variance()],
+                        [detect_timer.get_mean()-detect_timer.get_variance(), detect_timer.get_mean()+detect_timer.get_variance()]
+                    ]
+            chart.update()
+
         # ui.switch("1")
         # ui.switch("2")
         # ui.switch("3")

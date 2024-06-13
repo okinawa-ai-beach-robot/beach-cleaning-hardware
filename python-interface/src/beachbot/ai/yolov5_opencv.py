@@ -54,7 +54,7 @@ class Yolo5OpenCV(DerbrisDetector):
         result = np.zeros((_max, _max, 3), np.uint8)
         result[0:row, 0:col] = inputs
         scale = 1.0/255.0 # convert byte color 0-255 to float value range 0-1
-        blob = cv2.dnn.blobFromImage(result, scale, (self.img_width,self.img_heigt), (0,0,0), True, crop=False)
+        blob = cv2.dnn.blobFromImage(result, scalefactor=scale, size=(self.img_width,self.img_height), mean=(0,0,0), swapRB=False, crop=False)
         self.net.setInput(blob)
 
         prediction = self.net.forward()
@@ -83,7 +83,7 @@ class Yolo5OpenCV(DerbrisDetector):
         result = np.zeros((_max, _max, 3), np.uint8)
         result[0:row, 0:col] = inputs
         scale = 1.0/255.0 # convert byte color 0-255 to float value range 0-1
-        blob = cv2.dnn.blobFromImage(result, scale, (self.img_width,self.img_height), (0,0,0), True, crop=False)
+        blob = cv2.dnn.blobFromImage(result, scalefactor=scale, size=(self.img_width,self.img_height), mean=(0,0,0), swapRB=False, crop=False) #swapRB: RGB<->BGR conversion!
         self.net.setInput(blob)
 
         prediction = self.net.forward()

@@ -79,4 +79,6 @@ python dataset_analyzer_ui.py
 It seems that the connection of the browser to the server is lost some times (TODO), in such case it may help to relod the browser window of to close and reopen a new tab.
 
 
+# Wiring Diagram
 
+![Wiring Diagram](./media/beach-robot-wiring.png)

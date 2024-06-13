@@ -46,7 +46,8 @@ totalFrames = video_capture.get(cv2.CAP_PROP_FRAME_COUNT)
 # # set frame position
 print("Open video")
 video_capture.set(cv2.CAP_PROP_POS_FRAMES,0)
-success, frame = video_capture.read()
+success, frame_bgr = video_capture.read()
+frame = frame_bgr[..., ::-1]  # OpenCV image (BGR to RGB)
 if not success:
     print("Video file could not be loaded:")
     sys.exit(-1)
@@ -65,8 +66,8 @@ print("[ result is: ", [class_ids, confidences, boxes], "]")
 print("Prepare serer ...")
 
 
-def convert(frame: np.ndarray) -> bytes:
-    _, imencode_image = cv2.imencode('.jpg', frame)
+def convert(frame_bgr: np.ndarray) -> bytes:
+    _, imencode_image = cv2.imencode('.jpg', frame_bgr)
     return imencode_image.tobytes()
 
 
@@ -82,7 +83,8 @@ def rframe(fnum=0):
     video_capture.set(cv2.CAP_PROP_POS_FRAMES,int(fnum))
     
     with read_timer as t:
-        succ, frame = video_capture.read()
+        succ, frame_bgr = video_capture.read()
+        frame = frame_bgr[..., ::-1]  # OpenCV image (BGR to RGB)
         
     with preprocess_timer as t:
         frame = ai_detect.crop_and_scale_image(frame)
@@ -96,9 +98,9 @@ def rframe(fnum=0):
     image.content = ""
     for classid, confidence, box in zip(class_ids, confidences, boxes):
         if confidence >= 0.01:
-            add_imgbox(*box)
+            add_imgbox(*box, ai_detect.list_classes[classid])
     #print(obj_res)
-    return succ, frame
+    return succ, frame_bgr
 
 @app.get('/file/frame')
 # Thanks to FastAPI's `app.get`` it is easy to create a web route which always provides the latest image from OpenCV.
@@ -107,11 +109,11 @@ async def grab_file_frame(fnum=0) -> Response:
         return placeholder
     # The `video_capture.read` call is a blocking function.
     # So we run it in a separate thread (default executor) to avoid blocking the event loop.
-    _, frame = await run.io_bound(lambda : rframe(fnum))
-    if frame is None:
+    _, frame_bgr = await run.io_bound(lambda : rframe(fnum))
+    if frame_bgr is None:
         return placeholder
     # `convert` is a CPU-intensive function, so we run it in a separate process to avoid blocking the event loop and GIL.
-    jpeg = await run.cpu_bound(convert, frame)
+    jpeg = await run.cpu_bound(convert, frame_bgr)
 
     print("Read stat:", read_timer)
     print("Preprocess stat:", preprocess_timer)

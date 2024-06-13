@@ -34,7 +34,7 @@ dependencies = [
     "onnxruntime",
     "matplotlib",
     "fastapi",
-    "nicegui"
+    "nicegui[highcharts]"
 ]
 requires-python = ">=3.8.1"
 

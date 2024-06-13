@@ -32,7 +32,7 @@ ai_detect = beachbot.ai.Yolo5Onnx(model_file=model_file, use_accel=False)
 black_1px = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjYGBg+A8AAQQBAHAgZQsAAAAASUVORK5CYII='
 placeholder = Response(content=base64.b64decode(black_1px.encode('ascii')), media_type='image/png')
 
-frame = cv2.imread(dataset.images[0])
+frame = cv2.imread(dataset.images[0])[..., ::-1]  # OpenCV image (BGR to RGB)
 img_width = frame.shape[1]
 img_height = frame.shape[0]
 print("Image size is", str(img_width)+"x"+str(img_height))
@@ -79,7 +79,8 @@ def add_imgbox(pleft=0, ptop=0, w=0, h=0, clsstr=None):
 def rframe(fnum=0):
     try:
         with read_timer as t:
-            frame = cv2.imread(dataset.images[int(fnum)])
+            frame_bgr=cv2.imread(dataset.images[int(fnum)])
+            frame = frame_bgr[..., ::-1]  # OpenCV image (BGR to RGB)
         with preprocess_timer as t:
             frame = ai_detect.crop_and_scale_image(frame)
         confidence_threshold = slider_th.value/1000.0
@@ -90,14 +91,14 @@ def rframe(fnum=0):
         image.content = ""
         for classid, confidence, box in zip(class_ids, confidences, boxes):
             if confidence >= 0.01:
-                add_imgbox(*box, dataset.classes[classid])
+                add_imgbox(*box, ai_detect.list_classes[classid])
         succ=True
     except Exception as x:
         succ=False
             
 
     #print(obj_res)
-    return succ, frame
+    return succ, frame_bgr
 
 @app.get('/file/frame')
 # Thanks to FastAPI's `app.get`` it is easy to create a web route which always provides the latest image from OpenCV.

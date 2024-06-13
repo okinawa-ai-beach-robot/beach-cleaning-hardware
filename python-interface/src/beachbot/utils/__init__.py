@@ -15,7 +15,7 @@ def is_running_by_pid(pid):
     stat = subprocess.call("ps -p %s" % pid,stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, shell=True)
     return stat == 0
 
-def kill_by_port(port):
+def kill_by_port(port, kill_own=False):
     process = Popen(["lsof", "-i", ":{0}".format(port)], stdout=PIPE, stderr=PIPE)
     stdout, stderr = process.communicate()
     print("AAA#", stdout)
@@ -24,8 +24,11 @@ def kill_by_port(port):
         if (len(data) <= 1):
             continue
         print(data)
+        print("Kill pid", data[1], "My pid is ", os.getpid(), "My ppid is", os.getppid())
         try:
-            os.kill(int(data[1]), signal.SIGKILL)
+            if kill_own or ((os.getpid()!=data[1]) and (os.getppid()!=data[1])):
+                print("Ill kill it!!", (os.getppid()!=data[1]), ((os.getpid()!=data[1]) and (os.getppid()!=data[1])) )
+                os.kill(int(data[1]), signal.SIGKILL)
         except:
             pass
         c=0

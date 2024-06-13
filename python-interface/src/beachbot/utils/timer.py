@@ -1,4 +1,5 @@
-import time
+import time, math
+import scipy
 
 def sgn(val):
     return -1 if val<0 else (1 if val > 0 else 0)
@@ -33,7 +34,16 @@ class Timer:
 
 
     def get_mean(self):
-        return self.K + self.Ex / self.n    
+        return self.K + safe_div(self.Ex, self.n) 
+    
+    def get_conf_interval(self, confidence=0.95):
+        try:
+            se = safe_div(math.sqrt(self.get_variance()), math.sqrt(self.n))
+            return se * scipy.stats.t.ppf((1 + confidence) / 2., self.n-1)
+        except ValueError as ex:
+            return 0
+
+   
     
     def get_variance(self):
         return safe_div(safe_div(self.Ex2 - self.Ex**2 , self.n), self.n - 1)

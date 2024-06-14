@@ -75,7 +75,7 @@ def sel_dataset(idx):
     print(slider._props)
     
 
-def sel_model(idx, backend_id=0):
+async def sel_model(idx, backend_id=0):
     global model_path, model_file, model_type, model_cls_list, ai_detect, slider, detect_timer
     if idx is not None:
         model_path = model_paths[idx.value]
@@ -89,6 +89,7 @@ def sel_model(idx, backend_id=0):
     print("Model classes are", model_cls_list)
 
     model_cls = model_cls_list[backend_id]
+    #ai_detect= await run.io_bound(lambda : model_cls(model_file=model_file, use_accel=False))
     ai_detect = model_cls(model_file=model_file, use_accel=False)
     print("image", image)
     print("slider", slider)
@@ -102,8 +103,8 @@ def sel_model(idx, backend_id=0):
 
 
 
-def sel_backend(idx):
-    sel_model(None, backend_id=idx.value)
+async def sel_backend(idx):
+    await sel_model(None, backend_id=idx.value)
 
 def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
     # initialize the dimensions of the image to be resized and

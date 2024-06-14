@@ -82,3 +82,12 @@ git push origin your-feature-branch
 git branch -d BRANCH_NAME
 git push ORIGIN --delete BRANCH_NAME
 ```
+### Delete last commit 
+Delete locally
+```
+git reset --hard HEAD~1
+```
+then delete form remote as well
+```
+git push jeffrey main --force
+```

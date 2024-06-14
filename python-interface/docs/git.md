@@ -91,3 +91,18 @@ then delete form remote as well
 ```
 git push jeffrey main --force
 ```
+
+# How to create pull request into remote branch??
+This opens a pull request in my fork:
+```
+gh pr create --assignee '@me' --head pr2 --base main --body "test" --title "test" 
+```
+This does not wok:
+```
+gh pr create --assignee '@me' --head pr2 --base main --body "test" --title "test" 
+```
+gives:
+```
+pull request create failed: GraphQL: Head sha can't be blank, Base sha can't be blank, No commits between origin/main and origin/pr2, Head ref must be a branch, Base ref must be a branch (createPullRequest)
+
+```

@@ -53,3 +53,32 @@ gives:
 pull request create failed: GraphQL: Head sha can't be blank, Base sha can't be blank, No commits between origin/main and origin/pr2, Head ref must be a branch, Base ref must be a branch (createPullRequest)
 
 ```
+## Setup
+
+```
+git config --global core.editor "nano"
+git push --set-upstream origin new-branch
+git remote add upstream https://github.com/XXXX.git
+```
+
+
+## Info
+```
+git log --oneline --graph --all
+git remote -v
+
+```
+
+## Update:
+```
+git fetch upstream
+git merge upstream/main
+git pull upstream main
+git push origin your-feature-branch
+```
+
+## Modify
+```
+git branch -d BRANCH_NAME
+git push ORIGIN --delete BRANCH_NAME
+```

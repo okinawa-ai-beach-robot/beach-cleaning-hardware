@@ -13,7 +13,7 @@ class Yolo5TorchHub(DerbrisDetector):
     Official YOLOv5 implementation based on Pytorch and torch Hub.\n
     """
 
-    def __init__(self, model_file="yolov5s", use_accel=True) -> None:
+    def __init__(self, model_file, use_accel=True) -> None:
         super().__init__(None)
         model_folder = os.path.dirname(os.path.realpath(model_file))
         model_type=None
@@ -66,7 +66,8 @@ class Yolo5TorchHub(DerbrisDetector):
     def apply_model(self, inputs, confidence_threshold=0.2, class_threshold=0.25):  
         self.net.conf = confidence_threshold  # NMS confidence threshold
         row, col, _ = inputs.shape
-        results = self.net([inputs], size=row)
+        with torch.no_grad():
+            results = self.net([inputs], size=row)
 
         res =  results.xyxy[0]
         result_class_ids = []
@@ -88,7 +89,8 @@ class Yolo5TorchHub(DerbrisDetector):
     def apply_model_percent(self, inputs, confidence_threshold=0.2, class_threshold=0.25):  
         self.net.conf = confidence_threshold  # NMS confidence threshold
         row, col, _ = inputs.shape
-        results = self.net([inputs], size=row)
+        with torch.no_grad():
+            results = self.net([inputs], size=row)
 
         res =  results.xyxy[0]
         result_class_ids = []

@@ -15,6 +15,8 @@ from nicegui import Client, app, core, run, ui
 
 import beachbot
 
+import traceback 
+
 
 
 
@@ -169,6 +171,8 @@ def rframe(fnum=0):
                 add_imgbox(*box, ai_detect.list_classes[classid])
         succ=True
     except Exception as x:
+        print("Errror rframe:", x)
+        traceback.print_exc() 
         succ=False
             
 

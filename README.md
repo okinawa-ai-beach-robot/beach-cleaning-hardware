@@ -67,6 +67,16 @@ Position and size is encoded relative to the image (value range 0-1), tha class 
 #### Dataset import from Roboflow:
 TODO
 
+#### Preparation of default data sets:
+To insert pretrained models such as original YOLOv5 and SSDMobilenet into the list of available models,
+reference definitions are necessary.
+The following commands will add the necessary files to the models folder:
+```
+cd ${HOME}/OIST_BC/beach-cleaning-hardware/
+mkdir -p ${BEACHBOT_HOME}/Models
+unzip data/DefaultModelStructure.zip -d ${BEACHBOT_HOME}/Models
+````
+
 
 ## How to Use:
 Various examples of how to use the provided packages are located in the folder `${HOME}/OIST_BC/beach-cleaning-hardware/python-interface/tests`

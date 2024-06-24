@@ -82,7 +82,7 @@ class Motor:
                 status = "Unknown status"
 
             print(f"[{self.name}] LO1: {lo1_value}, LO2: {lo2_value}, Status: {status}")
-            time.sleep(1)
+            time.sleep(0.1)
 
     def change_speed(self, speed: int) -> None:
         """

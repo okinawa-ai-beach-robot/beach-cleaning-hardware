@@ -9,12 +9,29 @@ app = Flask(__name__)
 
 pwm_pins = [32, 33]
 gpio_pins = [7, 15, 29, 31]
+motor_driver_error_pins = [18, 22, 24, 26]
 _frequency_hz = 50
 
 GPIO.setmode(GPIO.BOARD)
 
-motor1 = Motor(pwm_pins[0], gpio_pins[0], gpio_pins[1], _frequency_hz)
-motor2 = Motor(pwm_pins[1], gpio_pins[2], gpio_pins[3], _frequency_hz)
+motor1 = Motor(
+    "motor1",
+    pwm_pins[0],
+    gpio_pins[0],
+    gpio_pins[1],
+    _frequency_hz,
+    motor_driver_error_pins[0],
+    motor_driver_error_pins[1],
+)
+motor2 = Motor(
+    "motor2",
+    pwm_pins[1],
+    gpio_pins[2],
+    gpio_pins[3],
+    _frequency_hz,
+    motor_driver_error_pins[2],
+    motor_driver_error_pins[3],
+)
 
 sleep_time = 0.1
 
@@ -53,7 +70,7 @@ def stop():
 def left():
     speed = request.form.get("speed")
     # Call your function here, e.g.,
-    motor1.change_speed(-int(speed))
+    motor1.change_speed(int(50))
     motor2.change_speed(int(speed))
     return f"Speed changed to {speed}"
 
@@ -63,7 +80,7 @@ def right():
     speed = request.form.get("speed")
     # Call your function here, e.g.,
     motor1.change_speed(int(speed))
-    motor2.change_speed(-int(speed))
+    motor2.change_speed(int(50))
     return f"Speed changed to {speed}"
 
 

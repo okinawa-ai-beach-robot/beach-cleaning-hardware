@@ -66,20 +66,29 @@ class Motor:
         """
         Polls the LO1 and LO2 pins and prints their status based on the truth table.
         """
+        # Thermal shutdown counter. If above 5, throw runtime error
+        thermal_shutdown_counter = 0
         while True:
             lo1_value = GPIO.input(self.lo1)
             lo2_value = GPIO.input(self.lo2)
 
-            if lo1_value == GPIO.HIGH and lo2_value == GPIO.HIGH:
-                status = "Motor{ Normal status (Normal operation)"
-            elif lo1_value == GPIO.HIGH and lo2_value == GPIO.LOW:
-                status = "Detected motor load open (OPD)"
-            elif lo1_value == GPIO.LOW and lo2_value == GPIO.HIGH:
-                status = "Detected over current (ISD)"
-            elif lo1_value == GPIO.LOW and lo2_value == GPIO.LOW:
+            if lo1_value == GPIO.LOW and lo2_value == GPIO.LOW:
                 status = "Detected over thermal (TSD)"
+                thermal_shutdown_counter += 1
+                if thermal_shutdown_counter > 5:
+                    # Stop motor and throw runtime error to stop execution
+                    self.turn_off()
+                    raise RuntimeError(f"[{self.name}] Detected over thermal (TSD)")
             else:
-                status = "Unknown status"
+                thermal_shutdown_counter = 0
+                if lo1_value == GPIO.HIGH and lo2_value == GPIO.HIGH:
+                    status = "Motor{ Normal status (Normal operation)"
+                elif lo1_value == GPIO.HIGH and lo2_value == GPIO.LOW:
+                    status = "Detected motor load open (OPD)"
+                elif lo1_value == GPIO.LOW and lo2_value == GPIO.HIGH:
+                    status = "Detected over current (ISD)"
+                else:
+                    status = "Unknown status"
 
             print(f"[{self.name}] LO1: {lo1_value}, LO2: {lo2_value}, Status: {status}")
             time.sleep(0.1)

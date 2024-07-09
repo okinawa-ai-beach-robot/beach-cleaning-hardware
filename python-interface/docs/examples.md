@@ -1,5 +1,5 @@
 # Overview over provided example files
-All prvided examples can be found in folder python-interface/examples
+All provided examples can be found in folder python-interface/examples
 
 ## How to record video frmaes?
 1) Step-by-step example of how to open,read,and frite video frames into a file in a loop: [manual_video_record.py](python-interface/examples/manual_video_record.py)

@@ -1,11 +1,14 @@
 import sys, os, cv2
 import beachbot
 
+# specify path to video file
 vid_file = beachbot.get_data_path()+os.path.sep+"video_beach_test.mp4"
+# specify which modele to use
 model_file = beachbot.get_model_path()+os.path.sep+"beachbot_yolov5s_beach-cleaning-object-detection__v3-augmented_ver__2__yolov5pytorch_1280"+os.path.sep+"best.onnx"
+# specify which frames of the video to analyze
 frame_numbers = [0,10,20]
 
-
+# Open openCV video device
 video_capture = cv2.VideoCapture(vid_file)
 total_num_frames = video_capture.get(cv2.CAP_PROP_FRAME_COUNT)
 video_capture.set(cv2.CAP_PROP_POS_FRAMES,0)

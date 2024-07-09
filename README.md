@@ -81,6 +81,8 @@ unzip data/DefaultModelStructure.zip -d ${BEACHBOT_HOME}/Models
 ## How to Use:
 Various examples of how to use the provided packages are located in the folder `${HOME}/OIST_BC/beach-cleaning-hardware/python-interface/tests`
 
+An overview is given in file [examples.md](python-interface/docs/examples.md)
+
 ### Evaluation of a trained model via web-ui:
 ```
 cd ${HOME}/OIST_BC/beach-cleaning-hardware/python-interface/tests

@@ -1,7 +1,7 @@
+from .. import logger
 from .debrisdetector import DerbrisDetector
 import onnxruntime
 import numpy as np
-
 
 class Yolo5Onnx(DerbrisDetector):
     _description="""
@@ -14,13 +14,13 @@ class Yolo5Onnx(DerbrisDetector):
         super().__init__(model_file)
         providers=["CPUExecutionProvider"]
         if use_accel and 'TensorrtExecutionProvider' in onnxruntime.get_available_providers():
-            print("TODO: Ignore Tensorrt for now!!")
+            logger.info("TODO: Ignore Tensorrt for now!!")
             providers=["CUDAExecutionProvider"]
         elif use_accel and 'CUDAExecutionProvider' in onnxruntime.get_available_providers():
             providers=["CUDAExecutionProvider"]
         else:
-            print("No Gpu acceleration availabe!")
-        print("DL providers are:", providers)
+            logger.info("No Gpu acceleration availabe!")
+        logger.info("DL providers are:" + str(providers))
         self.session = onnxruntime.InferenceSession(model_file, providers=providers)
         if self.session is None:
             raise ValueError("Failed to load the model " + model_file)
@@ -28,7 +28,7 @@ class Yolo5Onnx(DerbrisDetector):
         input_type = self.session.get_inputs()[0].type
         self.img_width = input_shapes[3]
         self.img_height = input_shapes[2]
-        print("model type is", input_type)
+        logger.info("model type is " + str(input_type))
         if "float16" in input_type:
             self.dtype=np.float16
         elif "float32" in input_type or "float" in input_type:

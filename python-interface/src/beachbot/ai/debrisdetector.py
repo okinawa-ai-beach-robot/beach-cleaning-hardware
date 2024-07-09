@@ -5,7 +5,7 @@ import yaml
 
 
 
-from .. import get_model_path
+from .. import get_model_path, logger
 
 
 
@@ -33,8 +33,8 @@ class DerbrisDetector():
                 self.img_width = export_info['img_width_export']
                 self.num_classes = str(export_info.get('nc', 6))
                 self.list_classes = export_info.get('names',["other_avoid","other_avoid_boundaries","other_avoid_ocean","others_traverable","trash_easy","trash_hard"])
-            print("Exported ONNX model operates on images of size ", self.img_width, "x", self.img_height, "[wxh] pixels")
-            print("Dataset defines", self.num_classes, "classes ->\n", self.list_classes)
+            logger.info("Exported ONNX model operates on images of size " + str(self.img_width) + "x" + str(self.img_height) + " [wxh] pixels")
+            logger.info("Dataset defines " + str(self.num_classes) + " classes -> " +  str(self.list_classes))
 
     def crop_and_scale_image(self, image):
         h = image.shape[0]
@@ -173,7 +173,6 @@ class DerbrisDetector():
         return img2
     
     def list_models_by_type(type):
-        print(DerbrisDetector._model_lib)
         return DerbrisDetector._model_lib.get(type, [])
 
     def add_model(type, modelcls):
@@ -181,7 +180,7 @@ class DerbrisDetector():
         if modelcls not in curr_list:
             curr_list.append(modelcls)
             DerbrisDetector._model_lib[type]=curr_list
-            print("Added class", modelcls, "with type", type)
+            logger.info("Added class " +str(modelcls) + " with type " + str(type))
 
     def list_model_types():
         return list(DerbrisDetector._model_lib.keys())
@@ -194,6 +193,8 @@ class DerbrisDetector():
     def get_model_type(modelpath):
         model_type = None
         if modelpath is not None:
+            if modelpath.endswith(os.path.sep+"best.onnx"):
+                modelpath=modelpath[:-len(os.path.sep+"best.onnx")]
             # load files
             with open(modelpath + os.path.sep + "export_info.yaml", 'r') as stream:
                 export_info = yaml.safe_load(stream)

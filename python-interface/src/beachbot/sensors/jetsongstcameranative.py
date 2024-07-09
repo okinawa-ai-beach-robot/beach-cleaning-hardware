@@ -1,13 +1,14 @@
 import os, threading
 import cv2
+from .. import logger
 
 try:
     from jetson_utils import videoSource, videoOutput
     from jetson_utils import cudaImage, cudaToNumpy
     import jetson_utils
 except ModuleNotFoundError as ex:
-    print(
-        "Jetson utils not installed or not available!\nJetsonGstCameraNative not available!"
+    logger.warning(
+        "Jetson utils not installed or not available! JetsonGstCameraNative not available!"
     )
 
 

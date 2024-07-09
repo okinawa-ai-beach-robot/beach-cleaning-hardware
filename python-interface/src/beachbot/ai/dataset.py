@@ -1,7 +1,7 @@
 import os
 import yaml
 
-from .. import get_dataset_path
+from .. import get_dataset_path, logger
 
 
 class Dataset():
@@ -15,7 +15,7 @@ class Dataset():
                 data_cfg = yaml.safe_load(stream)
                 num_classes = str(data_cfg['nc'])
                 self.classes = data_cfg['names']
-                print("Dataset defines", num_classes, "classes ->\n", self.classes)
+                logger.info("Dataset defines " + str(num_classes) + " classes -> " +  str(self.classes))
                 assert len(self.classes)!=num_classes, "Error: Dataset inconsistent, number of classes does not match number of labels"
                 self.images, self.rects = Dataset._load_img_list(datasetpath + os.path.sep + subtype)
 

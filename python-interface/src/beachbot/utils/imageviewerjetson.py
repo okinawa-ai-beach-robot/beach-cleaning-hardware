@@ -1,9 +1,10 @@
+from .. import logger
 try:
     from jetson_utils import videoOutput
     from jetson_utils import cudaFromNumpy
 except ModuleNotFoundError as ex:
-    print(
-        "Jetson utils not installed or not available!\nImageViewerJetson not available!"
+    logger.warning(
+        "Jetson utils not installed or not available! ImageViewerJetson not available!"
     )
 
 

@@ -1,11 +1,13 @@
 import time
 import math
 
+from .. import logger
+
 try:
     import Jetson.GPIO as GPIO
 except ModuleNotFoundError as ex:
-    print(
-        "Jetson GPIO library not installed or not available!\nMotor interface may not be available!"
+    logger.warning(
+        "Jetson GPIO library not installed or not available! Motor interface may not be available!"
     )
 
 import threading

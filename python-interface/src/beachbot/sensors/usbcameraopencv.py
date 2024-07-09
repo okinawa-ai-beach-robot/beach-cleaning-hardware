@@ -11,6 +11,8 @@ class UsbCameraOpenCV(threading.Thread):
         self._stopped = True
         self._frame = None
 
+        self._lock = threading.Lock()
+
         self._cap = cv2.VideoCapture(dev_id)
         self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
@@ -31,11 +33,14 @@ class UsbCameraOpenCV(threading.Thread):
     def run(self):
         while not self._stopped:
             self._ret, bgr_frame = self._cap.read()
-            self._frame = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2RGB)
+            with self._lock:
+                self._frame = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2RGB)
         self._cap.release()
 
     def read(self):
-        return self._frame
+        with self._lock:
+            img_cpy = self._frame.copy()
+        return img_cpy
 
     def stop(self):
         self._stopped = True

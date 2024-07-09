@@ -47,6 +47,8 @@ class JetsonCsiCameraOpenCV(threading.Thread):
         self._stopped = True
         self._frame = None
 
+        self._lock = threading.Lock()
+
         self._cap = cv2.VideoCapture(
             gstreamer_pipeline_builder(
                 sensor_id=dev_id,
@@ -74,11 +76,14 @@ class JetsonCsiCameraOpenCV(threading.Thread):
         while not self._stopped:
             # TODO check: self._cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
             self.ret_val, bgr_frame = self._cap.read()
-            self._frame = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2RGB)
+            with self._lock:
+                self._frame = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2RGB)
         self._cap.release()
 
     def read(self):
-        return self._frame
+        with self._lock:
+            img_cpy = self._frame.copy()
+        return img_cpy
 
     def stop(self):
         self._stopped = True

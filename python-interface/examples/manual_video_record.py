@@ -9,8 +9,8 @@ viewer = beachbot.utils.ImageViewerMatplotlib
 
 # There are two possible backend to read images from the camera devices
 # cam1 = beachbot.sensors.UsbCameraOpenCV(width=640, height=480, fps=25, dev_id=1)
-# cam1 = beachbot.sensors.JetsonCsiCameraOpenCV()
-cam1 = beachbot.sensors.JetsonGstCameraNative()
+cam1 = beachbot.sensors.JetsonCsiCameraOpenCV()
+#cam1 = beachbot.sensors.JetsonGstCameraNative()
 
 # retrieve information on video stream:
 capture_width, capture_height = cam1.get_size()

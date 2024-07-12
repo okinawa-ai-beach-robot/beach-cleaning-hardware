@@ -6,7 +6,6 @@ components/arm_RoArm-M1/RoArm-M1-ESP32/
 .vscode/
 .github/workflows/
 .github/*.yml
-python-interface/tests/
 
 # python-interface
 python-interface/.github/workflows/*.yml

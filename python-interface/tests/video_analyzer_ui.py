@@ -17,6 +17,8 @@ import beachbot
 
 import traceback 
 
+vid_folder="/home/jfq/Desktop/beachbotrecordings_2_8_2024/"
+vid_files = [f.name for f in os.scandir(vid_folder) if (f.is_file() and f.path.endswith(".mp4"))]
 
 
 
@@ -24,8 +26,24 @@ detect_timer =beachbot.utils.Timer()
 read_timer = beachbot.utils.Timer()
 preprocess_timer = beachbot.utils.Timer()
 
-dataset = beachbot.ai.Dataset(beachbot.ai.Dataset.list_dataset_paths()[0])
-print("Loaded", len(dataset.images), " samples from dataset")
+
+black_1px = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjYGBg+A8AAQQBAHAgZQsAAAAASUVORK5CYII='
+placeholder = Response(content=base64.b64decode(black_1px.encode('ascii')), media_type='image/png')
+vid_file=vid_files[0]
+video_capture = cv2.VideoCapture(vid_file)
+# # get total number of frames
+totalFrames = video_capture.get(cv2.CAP_PROP_FRAME_COUNT)
+# randomFrameNumber=random.randint(0, totalFrames)
+# # set frame position
+print("Open video")
+video_capture.set(cv2.CAP_PROP_POS_FRAMES,0)
+success, frame_bgr = video_capture.read()
+try:
+    frame = frame_bgr[..., ::-1]  # OpenCV image (BGR to RGB)
+except Exception as ex:
+    frame=None
+
+
 
 model_paths = beachbot.ai.DerbrisDetector.list_model_paths()
 print("Model paths are", model_paths)
@@ -50,27 +68,42 @@ ai_detect = model_cls(model_file=model_file, use_accel=False)
 black_1px = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjYGBg+A8AAQQBAHAgZQsAAAAASUVORK5CYII='
 placeholder = Response(content=base64.b64decode(black_1px.encode('ascii')), media_type='image/png')
 
-frame = cv2.imread(dataset.images[0])[..., ::-1]  # OpenCV image (BGR to RGB)
+if frame is None:
+    frame = np.zeros((720,1280,3), dtype=np.uint8)
+
+
 img_width = frame.shape[1]
 img_height = frame.shape[0]
-print("Image size is", str(img_width)+"x"+str(img_height))
 
 
 print("Load AI model")
 class_threshold=0.25
 confidence_threshold=0.2
-frame = ai_detect.crop_and_scale_image(frame)
-class_ids, confidences, boxes = ai_detect.apply_model_percent(frame, confidence_threshold=confidence_threshold, class_threshold=class_threshold)
-print("[ result is: ", [class_ids, confidences, boxes], "]")
+if frame is not None:
+    print("Image size is", str(img_width)+"x"+str(img_height))
+    frame = ai_detect.crop_and_scale_image(frame)
+    class_ids, confidences, boxes = ai_detect.apply_model_percent(frame, confidence_threshold=confidence_threshold, class_threshold=class_threshold)
+    print("[ result is: ", [class_ids, confidences, boxes], "]")
+else:
+    frame = placeholder
+
+
 
 print("Prepare server ...")
 
 def sel_dataset(idx):
-    global dataset, slider, sliderlabel, image
-    dataset = beachbot.ai.Dataset(beachbot.ai.Dataset.list_dataset_paths()[idx.value])
-    print("Loaded", len(dataset.images), " samples from dataset")
+    global slider, sliderlabel, image, vid_files, totalFrames, video_capture
+    print("open file:",vid_folder+vid_files[idx.value] )
+    video_capture = cv2.VideoCapture(vid_folder+vid_files[idx.value])
+    # # get total number of frames
+    totalFrames = video_capture.get(cv2.CAP_PROP_FRAME_COUNT)
+    # randomFrameNumber=random.randint(0, totalFrames)
+    # # set frame position
+    print("Open video", totalFrames)
+    video_capture.set(cv2.CAP_PROP_POS_FRAMES,0)
+
     #slider = ui.slider(min=0, max=len(dataset.images)-1, value=0, on_change=lambda x: up_img(image, val=x.value))
-    slider._props['max'] = len(dataset.images)-1
+    slider._props['max'] = totalFrames-1
     slider.update()
     slider.set_value(1)
     sliderlabel.update()
@@ -80,30 +113,34 @@ def sel_dataset(idx):
     
 
 async def sel_model(idx, backend_id=0):
-    global model_path, model_file, model_type, model_cls_list, ai_detect, slider, detect_timer
-    if idx is not None:
-        model_path = model_paths[idx.value]
-    print("Model path is", model_path)
+    global model_path, model_file, model_type, model_cls_list, ai_detect, slider, detect_timer, sel_backend, backend_content
+    try:
+        if idx is not None:
+            model_path = model_paths[idx.value]
+        print("Model path is", model_path)
 
-    model_file = model_path+os.path.sep+"best.onnx"
-    model_type = beachbot.ai.DerbrisDetector.get_model_type(model_path)
-    print("Model type is", model_type)
+        model_file = model_path+os.path.sep+"best.onnx"
+        model_type = beachbot.ai.DerbrisDetector.get_model_type(model_path)
+        print("Model type is", model_type)
 
-    model_cls_list= beachbot.ai.DerbrisDetector.list_models_by_type(model_type)
-    print("Model classes are", model_cls_list)
+        model_cls_list= beachbot.ai.DerbrisDetector.list_models_by_type(model_type)
+        print("Model classes are", model_cls_list)
 
-    model_cls = model_cls_list[backend_id]
-    #ai_detect= await run.io_bound(lambda : model_cls(model_file=model_file, use_accel=False))
-    ai_detect = model_cls(model_file=model_file, use_accel=False)
-    print("image", image)
-    print("slider", slider)
-    print("slider.get_value()", slider.value)
+        model_cls = model_cls_list[backend_id]
+        #ai_detect= await run.io_bound(lambda : model_cls(model_file=model_file, use_accel=False))
+        ai_detect = model_cls(model_file=model_file, use_accel=False)
+        print("image", image)
+        print("slider", slider)
+        print("slider.get_value()", slider.value)
 
-    up_img(image, val=slider.value)
-    backend_content={key:model_cls_list[key].__name__ for key in range(len(model_cls_list))}
-    sel_backend.set_options(backend_content,value=backend_id)
-    detect_timer = beachbot.utils.Timer()
-
+        up_img(image, val=slider.value)
+        backend_content={key:model_cls_list[key].__name__ for key in range(len(model_cls_list))}
+        sel_backend.set_options(backend_content,value=backend_id)
+        detect_timer = beachbot.utils.Timer()
+    except Exception as x:
+        print("Errror rframe:", x)
+        traceback.print_exc() 
+    
 
 
 
@@ -156,9 +193,13 @@ def add_imgbox(pleft=0, ptop=0, w=0, h=0, clsstr=None):
         image.content += f'<text text-anchor="start" x="{pleft*100}%" y="{ptop*100}%" stroke="{color}" font-size="2em">{clsstr}</text>'
     
 def rframe(fnum=0):
+    frame_bgr = None
     try:
         with read_timer as t:
-            frame_bgr=cv2.imread(dataset.images[int(fnum)])
+            print("select frame:", int(fnum))
+            video_capture.set(cv2.CAP_PROP_POS_FRAMES,int(fnum))
+            success, frame_bgr = video_capture.read()
+            print(" frame:", frame_bgr)
             frame = frame_bgr[..., ::-1]  # OpenCV image (BGR to RGB)
         with preprocess_timer as t:
             frame = ai_detect.crop_and_scale_image(frame)
@@ -257,7 +298,7 @@ with ui.left_drawer().classes('bg-blue-100') as left_drawer:
         ui.button('Shut Down', on_click=lambda: os.kill(os.getpid(), signal.SIGKILL))
         ui.separator()
         lbl2 = ui.label('Dataset:')
-        data_content = {key:beachbot.ai.Dataset.list_dataset_paths()[key] for key in range(len(beachbot.ai.Dataset.list_dataset_paths()))}
+        data_content = {key:vid_files[key] for key in range(len(vid_files))}
         ui.select(data_content, value=0, on_change=sel_dataset)
         lbl3 = ui.label('Model:')
         model_content={key:model_paths[key].rsplit(os.path.sep)[-1] for key in range(len(model_paths))}
@@ -315,8 +356,8 @@ with ui.row().classes('w-full'):
             obj.set_source(f'/file/frame?fnum={val}&t={time.time()}')
         ui.label('Model Analyzer:')
         image = ui.interactive_image(source="file/frame?fnum=0",size=(img_width,img_height)).style('width: 100%')
-        slider = ui.slider(min=0, max=len(dataset.images)-1, value=0, on_change=lambda x: up_img(image, val=x.value))
-        sliderlabel=ui.label().bind_text_from(slider, 'value', backward=lambda a: f'Frame {a} of {len(dataset.images)}')
+        slider = ui.slider(min=0, max=totalFrames-1, value=0, on_change=lambda x: up_img(image, val=x.value))
+        sliderlabel=ui.label().bind_text_from(slider, 'value', backward=lambda a: f'Frame {a} of {totalFrames}')
         slider_th = ui.slider(min=1, max=500, value=200, on_change=lambda x: up_img(image, val=slider.value))
         ui.label().bind_text_from(slider_th, 'value', backward=lambda a: f'Confidence threshold is {a/1000.0}')
         slider_clsth = ui.slider(min=1, max=500, value=250, on_change=lambda x: up_img(image, val=slider.value))

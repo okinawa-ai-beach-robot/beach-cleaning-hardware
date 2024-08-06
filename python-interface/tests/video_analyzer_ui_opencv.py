@@ -27,8 +27,8 @@ preprocess_timer = beachbot.utils.Timer()
 
 vid_file = beachbot.get_data_path()+os.path.sep+"video_beach_test.mp4"
 model_file = beachbot.get_model_path()+os.path.sep+"beachbot_yolov5s_beach-cleaning-object-detection__v3-augmented_ver__2__yolov5pytorch_1280"+os.path.sep+"best.onnx"
-
-
+vid_file="/home/jfq/Desktop/beachbotrecordings_2_8_2024/20240801-110202.mp4"
+vid_file="/home/jfq/Desktop/beachbotrecordings_2_8_2024/20240801-110112.mp4"
 ai_detect = beachbot.ai.Yolo5OpenCV(model_file=model_file)
 
 # In case you don't have a webcam, this will provide a black placeholder image.

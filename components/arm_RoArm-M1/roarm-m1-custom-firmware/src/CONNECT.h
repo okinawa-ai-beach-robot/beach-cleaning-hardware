@@ -307,7 +307,7 @@ void cmdProcess(){
     case  ROARM_M1_CONFIG:configRoArm();processType = -1;break;
     case             HELP:getHelp();processType = -1;break;
       
-    case SET_MAX_TORQUE:set_max_torque();processType = -1;break;
+    case SET_MAX_TORQUE_CMD:set_max_torque();processType = -1;break;
     case SET_PWM:/*set_pwm();*/processType = -1;break;
     case SET_LED:set_led();processType = -1;break;
 

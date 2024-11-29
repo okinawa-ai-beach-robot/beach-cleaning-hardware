@@ -2,7 +2,7 @@
 
 #define SMS_STS_MAX_TORQUE 16
 #define MAX_TORQUE_LIMIT   48
-#define SET_MAX_TORQUE     200
+#define SET_MAX_TORQUE     10 // JFQ TODO
 
 // === ST Servo === TypeNum:9
 SMS_STS st;
@@ -82,7 +82,8 @@ bool getFeedBack(byte servoID){
     }
     else{
       if(serialFeedback){
-        Serial.println("FeedBack err");
+        Serial.println("FeedBack err 9");
+        Serial.print("ID"); Serial.print(servoID); Serial.println(" ");
       }
       feedBackErrorCheck = true;
       return false;
@@ -103,7 +104,8 @@ bool getFeedBack(byte servoID){
     }
     else{
       if(serialFeedback){
-        Serial.println("FeedBack err");
+        Serial.println("FeedBack err 5");
+        Serial.print("ID"); Serial.print(servoID); Serial.println(" ");
       }
       
     }
@@ -154,6 +156,7 @@ void servoInit(){
 void setMiddle(byte InputID){
   if(ServoType[InputID]==9)
   {
+    Serial.print(InputID); Serial.println(" middle set");
     st.CalibrationOfs(InputID);
     if(InputID == 5){
       st.unLockEprom(5);
@@ -165,10 +168,14 @@ void setMiddle(byte InputID){
   }
   else if(ServoType[InputID] == 5)
   {
+    Serial.println(" middle set servo 5");
     //sc.CalibrationOfs()
     //sc.writeWord
     //SMS_STS_TORQUE_LIMIT_L
     // TODO not clear which register is used!!
+  }
+  else{
+    Serial.println(" middle set FAIL!!");
   }
 
 }

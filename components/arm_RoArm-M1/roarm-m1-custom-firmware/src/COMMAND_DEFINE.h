@@ -137,11 +137,20 @@ void anglePosInit(){
 	AngleList[3] = 280;
 	AngleList[4] = 135;
 	AngleList[5] = 180;
+	if (ServoType[5] == 5)
+	{
+		Serial.println("Using Custom Gripper!");
+		AngleList[5] = 50;
+	}
+
+
+
 	setTargetJointAngle(1, int(angleGenOut(AngleList[1])+0.5), 500, 150);
 	setTargetJointAngle(2, int(angleGenOut(AngleList[2])+0.5), 1500, 150);
 	setTargetJointAngle(3, int(angleGenOut(AngleList[3])+0.5), 500, 150);
 	setTargetJointAngle(4, int(angleGenOut(AngleList[4])+0.5), 500, 150);
 	setTargetJointAngle(5, int(angleGenOut(AngleList[5])+0.5), 500, 150);
+
 	globalCmdType = TypeAngleCtrl;
 	bool posGoal_1 = false;
 	bool posGoal_2 = false;
@@ -512,18 +521,30 @@ void bootPosCheck(){
 	AngleList[2] = 10;
 	AngleList[3] = 270;
 	AngleList[4] =  90;
-	AngleList[5] = 180;
+	AngleList[5] = 150;
+	if (ServoType[5] == 5)
+	{
+		Serial.println("Using Custom Gripper!");
+		AngleList[5] = 50;
+	}
+	delay(1000);
 	Serial.println("setTargetJointAngle0");
 	setTargetJointAngle(1, int(angleGenOut(AngleList[1])+0.5), 100, 150);
 	setTargetJointAngle(2, int(angleGenOut(AngleList[2])+0.5), 500, 150);
 	setTargetJointAngle(3, int(angleGenOut(AngleList[3])+0.5), 100, 150);
 	setTargetJointAngle(4, int(angleGenOut(AngleList[4])+0.5), 100, 150);
 	setTargetJointAngle(5, int(angleGenOut(AngleList[5])+0.5), 100, 150);
+	
 	Serial.println("setTargetJointAngle");
 
 	delay(1000);
 	while(1){
 		getFeedBack(2);
+		// Serial.println("==========================");
+		// Serial.println(loadRead[2]);
+		// Serial.println(posRead[2]);
+		// Serial.println(int(angleGenOut(AngleList[2])+0.5));
+		// Serial.println(posCheckOffset);
 		if(loadRead[2] > torqueThreshold){
 			Serial.println("Reaching the edge.");
 			servoStop(2);
@@ -539,6 +560,9 @@ void bootPosCheck(){
 		else if(posRead[2] > int(angleGenOut(AngleList[2])+0.5) - posCheckOffset && posRead[2] < int(angleGenOut(AngleList[2])+0.5) + posCheckOffset){
 			Serial.println("break it!!");
 			break;
+		}
+		else{
+			setTargetJointAngle(2, int(angleGenOut(AngleList[2])+0.5), 500, 150);
 		}
 	}
 	delay(50);

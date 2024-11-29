@@ -23,6 +23,39 @@ DynamicJsonDocument jsonStepMove(1024);
 
 // ANGLE_CTRL: T:cmdType, P1-5:angleInput, S:speedInput, A:accInput
 // {"T":1,"P1":180,"P2":0,"P3":90,"P4":90,"P5":180,"S1":200,"S2":200,"S3":200,"S4":200,"S5":200,"A1":60,"A2":60,"A3":60,"A4":60,"A5":60}
+//{"T":1,"P1":180,"P2":0,"P3":0,"P4":0,"P5":180,"S1":20,"S2":20,"S3":20,"S4":200,"S5":20,"A1":60,"A2":60,"A3":60,"A4":60,"A5":60}
+// default (open gripper):
+//{"T":1,"P1":180,"P2":0,"P3":100,"P4":45,"P5":50,"S1":200,"S2":200,"S3":200,"S4":200,"S5":200,"A1":60,"A2":60,"A3":60,"A4":60,"A5":60}
+//{"T":1,"P1":180,"P2":-15,"P3":100,"P4":45,"P5":50,"S1":200,"S2":200,"S3":200,"S4":200,"S5":200,"A1":60,"A2":60,"A3":60,"A4":60,"A5":60}
+// {"T":1,"P1":180,"P2":-15,"P3":100,"P4":45,"P5":50,"S1":200,"S2":200,"S3":200,"S4":200,"S5":200,"A1":60,"A2":60,"A3":60,"A4":60,"A5":60}
+/*
+{"T":1,"P1":180,"P2":-45,"P3":100,"P4":45,"P5":45,"S1":200,"S2":200,"S3":200,"S4":200,"S5":200,"A1":60,"A2":60,"A3":60,"A4":60,"A5":60}
+
+
+
+	AngleList[1] = 180;
+	AngleList[2] = 10;
+	AngleList[3] = 280;
+	AngleList[4] = 135;
+	AngleList[5] = 180;
+
+  int STDirection[5] = {1, 1, 1, -1, 1};
+
+      jsonPosCtrl[0] = (int)(angleGenOut(STDirection[0]*jsonCmdReceive["P1"].as<float>()) + 0.5);
+    jsonPosCtrl[1] = (int)(angleGenOut(STDirection[1]*jsonCmdReceive["P2"].as<float>()+15)*3 + 0.5);
+    jsonPosCtrl[2] = (int)(angleGenOut(STDirection[2]*jsonCmdReceive["P3"].as<float>()+180) + 0.5);
+    jsonPosCtrl[3] = (int)(angleGenOut(STDirection[3]*jsonCmdReceive["P4"].as<float>()+180) + 0.5);
+    jsonPosCtrl[4] = (int)(angleGenOut(STDirection[4]*jsonCmdReceive["P5"].as<float>()) + 0.5);
+  
+  180
+  +15*3!!!!
+90+180 = 270
+-1*90+180=90
+180
+
+180
+
+  */
 
 // ANGLE_CTRL_INIT: move to angleCtrl initPos.
 // {"T":11}
@@ -70,10 +103,10 @@ DynamicJsonDocument jsonStepMove(1024);
 //       CONFIG_ALL_INIT: {"T":9,"P1":6} all servos move to pos2047.
 // CONFIG_TORQUE_ALL_OFF: {"T":9,"P1":7}
 //  CONFIG_TORQUE_ALL_ON: {"T":9,"P1":8}
-//     CONFIG_TORQUE_OFF: {"T":9,"P1":servoNum,"P2":0}
-//      CONFIG_TORQUE_ON: {"T":9,"P1":servoNum,"P2":1}
+//     CONFIG_TORQUE_OFF: {"T":9,"P1":servoNum,"P2":0} // {"T":9,"P1":3,"P2":0}
+//      CONFIG_TORQUE_ON: {"T":9,"P1":servoNum,"P2":1}// {"T":9,"P1":3,"P2":1}
 //           CONFIG_MOVE: {"T":9,"P1":servoNum,"P2":2,"P3":PosInput}
-//     CONFIG_SET_MIDDLE: {"T":9,"P1":servoNum,"P2":10}
+//     CONFIG_SET_MIDDLE: {"T":9,"P1":servoNum,"P2":10} // {"T":9,"P1":2,"P2":10} 
 
 // === HELP ===
 // HELP:{"T":10}
@@ -98,7 +131,7 @@ DynamicJsonDocument jsonStepMove(1024);
 #define ROARM_M1_CONFIG  9
 #define HELP             10
 
-#define SET_MAX_TORQUE 100
+#define SET_MAX_TORQUE_CMD 100
 #define SET_PWM 101
 #define SET_LED 102
 
@@ -738,11 +771,11 @@ void cmdHandler(){
     case    RECORD_REPLAY:Serial.println("RECORD_REPLAY");break;
     case  ROARM_M1_CONFIG:Serial.println("ROARM_M1_CONFIG");break;
     case             HELP:Serial.println("HELP");break;
-    case SET_MAX_TORQUE:Serial.println("SET_MAX_TORQUE");break;
+    case SET_MAX_TORQUE_CMD:Serial.println("SET_MAX_TORQUE_CMD");break;
     case SET_PWM:Serial.println("SET_PWM");break;
     case SET_LED:Serial.println("SET_LED");break;
   }
-
+// {}
   processType = cmdType;
   // switch(cmdType){
   //   case   EMERGENCY_STOP:emergencyStop();break;

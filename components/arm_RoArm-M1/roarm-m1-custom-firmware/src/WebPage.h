@@ -601,12 +601,14 @@ const char index_html[] PROGMEM = R"rawliteral(
                   document.getElementById("anglectrl-t3").innerHTML = jsonResponse.A3;
                   document.getElementById("anglectrl-t4").innerHTML = jsonResponse.A4;
                   document.getElementById("anglectrl-t5").innerHTML = jsonResponse.A5;
-
+                try{
                   document.getElementById("coordCtrl-t1").innerHTML = jsonResponse.C1.toFixed(2);
                   document.getElementById("coordCtrl-t2").innerHTML = jsonResponse.C2.toFixed(2);
                   document.getElementById("coordCtrl-t3").innerHTML = jsonResponse.C3.toFixed(2);
                   document.getElementById("coordCtrl-t4").innerHTML = jsonResponse.C4.toFixed(2);
                   document.getElementById("coordCtrl-t5").innerHTML = jsonResponse.C5.toFixed(2);
+                  }
+                  catch(e){}
                 }
             };
             xhttp.open("GET", "readData", true);

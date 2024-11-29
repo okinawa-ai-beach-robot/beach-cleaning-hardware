@@ -210,42 +210,35 @@ void setup() {
   getMAC();
   
   boardDevInit();
-
+Serial.println("boardDevInit");
   servoInit();
-  Serial.print("INIT done9!!!");
-
+Serial.println("servoInit");
   bootPosCheck();
-  // Serial.print("INIT done8!!!");
+Serial.println("bootPosCheck");
+  wifiInit();
 
-  // wifiInit();
-  // Serial.print("INIT done7!!!");
+  espNowInit();
 
-  // espNowInit();
-  // Serial.print("INIT done1!!!");
+  webServerSetup();
+Serial.println("webServerSetup");
+  threadInit();
+  if(!torqueLockStatus){
+    Serial.println("torqueLockStatus");
+    torqueCtrlAll(0);
+  }
+  Serial.println("init ok");
 
-  // webServerSetup();
-  // Serial.print("INIT done2!!!");
-
-  // threadInit();
-
-  // Serial.print("INIT done3!!!");
-
-  // if(!torqueLockStatus){
-  //   torqueCtrlAll(0);
-  // }
-
-  //  Serial.print("INIT done!!!");
-  
 }
 
 
 void loop() {
-  // server.handleClient();
-  // serialCtrl();
-delay(2000);
-  setTargetJointAngle(5, 500, 100, 150);
-delay(2000);
-  setTargetJointAngle(5, 800, 100, 150);
+  //Serial.println("TEST");
+  server.handleClient();
+  serialCtrl();
+// delay(2000);
+//   setTargetJointAngle(5, 500, 100, 150);
+// delay(2000);
+//   setTargetJointAngle(5, 800, 100, 150);
 
-  delay(10);
+  delay(100);
 }

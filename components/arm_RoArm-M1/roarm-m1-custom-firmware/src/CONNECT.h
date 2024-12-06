@@ -325,7 +325,7 @@ void jsonCtrl(String cmdJsonInput){
 void serialCtrl(){
   if (Serial.available()){
     DeserializationError err = deserializeJson(jsonCmdReceive, Serial);
-    if (err == DeserializationError::Ok){
+    if (err == DeserializationError::Ok && jsonCmdReceive.containsKey("T")){
       CtrlModeSelect = CTRL_VIA_SERIAL;
       cmdHandler();
     }

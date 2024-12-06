@@ -203,17 +203,17 @@ void setTargetJointAngle(uint8_t id, int16_t pos, uint16_t speed, uint8_t accel)
 {
   if(ServoType[id] == 9)
   {
-    Serial.print("a");
-    Serial.println(id);
-    Serial.println(pos);
-    Serial.println(speed);
-    Serial.println(accel);
+    // Serial.print("a");
+    // Serial.println(id);
+    // Serial.println(pos);
+    // Serial.println(speed);
+    // Serial.println(accel);
     st.WritePosEx(id, pos, speed, accel);
   }
   else if(ServoType[id] == 5)
   {
-    Serial.print("b");
-    Serial.println(id);
+    // Serial.print("b");
+    // Serial.println(id);
     sc.WritePosEx(id, pos, speed, accel);
   }
   else{

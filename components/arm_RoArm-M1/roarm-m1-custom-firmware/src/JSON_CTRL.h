@@ -756,24 +756,34 @@ void cmdHandler(){
     return;
   }
   int cmdType = jsonCmdReceive["T"].as<int>();
-  Serial.print("T:");Serial.print(cmdType);Serial.print(" ");
-  switch(cmdType){
-    case   EMERGENCY_STOP:emergencyStop();Serial.println("EMERGENCY_STOP");break;
-    case       ANGLE_CTRL:Serial.println("ANGLE_CTRL");break;
-    case  ANGLE_CTRL_INIT:Serial.println("ANGLE_CTRL_INIT");break;
-    case       COORD_CTRL:Serial.println("COORD_CTRL");break;
-    case  COORD_CTRL_INIT:Serial.println("COORD_CTRL_INIT");break;
-    case      ST_POS_CTRL:Serial.println("ST_POS_CTRL");break;
-    case     GET_DEV_INFO:Serial.println("GET_DEV_INFO");break;
-    case  GET_ANGTOR_INFO:Serial.println("GET_ANGTOR_INFO");break;
-    case ST_POS_CTRL_INIT:Serial.println("ST_POS_CTRL_INIT");break;
-    case  GET_INFO_BUFFER:Serial.println("GET_INFO_BUFFER");break;
-    case    RECORD_REPLAY:Serial.println("RECORD_REPLAY");break;
-    case  ROARM_M1_CONFIG:Serial.println("ROARM_M1_CONFIG");break;
-    case             HELP:Serial.println("HELP");break;
-    case SET_MAX_TORQUE_CMD:Serial.println("SET_MAX_TORQUE_CMD");break;
-    case SET_PWM:Serial.println("SET_PWM");break;
-    case SET_LED:Serial.println("SET_LED");break;
+  //Serial.print("JT:");Serial.print(cmdType);Serial.print(" ");
+  // if (cmdType==EMERGENCY_STOP)
+  // {
+  //   Serial.println("error  T0 rec!");
+  //   serializeJsonPretty(jsonCmdReceive, Serial);
+  // }
+  // switch(cmdType){
+  //   case   EMERGENCY_STOP:emergencyStop();Serial.println("EMERGENCY_STOP");break;
+  //   case       ANGLE_CTRL:Serial.println("ANGLE_CTRL");break;
+  //   case  ANGLE_CTRL_INIT:Serial.println("ANGLE_CTRL_INIT");break;
+  //   case       COORD_CTRL:Serial.println("COORD_CTRL");break;
+  //   case  COORD_CTRL_INIT:Serial.println("COORD_CTRL_INIT");break;
+  //   case      ST_POS_CTRL:Serial.println("ST_POS_CTRL");break;
+  //   case     GET_DEV_INFO:Serial.println("GET_DEV_INFO");break;
+  //   case  GET_ANGTOR_INFO:Serial.println("GET_ANGTOR_INFO");break;
+  //   case ST_POS_CTRL_INIT:Serial.println("ST_POS_CTRL_INIT");break;
+  //   case  GET_INFO_BUFFER:Serial.println("GET_INFO_BUFFER");break;
+  //   case    RECORD_REPLAY:Serial.println("RECORD_REPLAY");break;
+  //   case  ROARM_M1_CONFIG:Serial.println("ROARM_M1_CONFIG");break;
+  //   case             HELP:Serial.println("HELP");break;
+  //   case SET_MAX_TORQUE_CMD:Serial.println("SET_MAX_TORQUE_CMD");break;
+  //   case SET_PWM:Serial.println("SET_PWM");break;
+  //   case SET_LED:Serial.println("SET_LED");break;
+  // }
+  if (cmdType==EMERGENCY_STOP)
+  {
+    emergencyStop();
+    Serial.println("EMERGENCY_STOP");
   }
 // {}
   processType = cmdType;

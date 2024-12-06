@@ -525,20 +525,17 @@ void getHelp(){
 void set_max_torque()
 {
 
-  for (char jn='1'; jn<='5', jn++)
+  for (char jn='1'; jn<='5'; jn++)
   {
     char keystr[] = "Qx";
-    keystr[1]= jn
-    jsonCmdReceive.containsKey(keystr)
-    uint16_t maxq = jsonCmdReceive[keystr].as<uint16_t>()
-    jn-'1';
+    keystr[1]= jn;
+    jsonCmdReceive.containsKey(keystr);
+    uint16_t maxq = jsonCmdReceive[keystr].as<uint16_t>();
+    Serial.print("Set max q "); Serial.print((int)(1+jn-'1')); Serial.print(" "); Serial.println(maxq);
     setMaxTorque(1+jn-'1', maxq);
 
 
   }
-  jsonCmdReceive.containsKey("T")
-
-  jsonPosCtrl[0] = jsonCmdReceive["P1"].as<int>();
 	
 }
 

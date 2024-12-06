@@ -192,12 +192,12 @@ void setMaxTorque(byte InputID, uint16_t percent_x10)
   {
       if(ServoType[InputID]==9)
       {
-        st.writeWord(5, MAX_TORQUE_LIMIT, percent_x10);
+        st.writeWord(InputID, MAX_TORQUE_LIMIT, percent_x10);
         // TODO maybe SMS_STS_MAX_TORQUE register as well?
       }
       else if(ServoType[InputID] == 5)
       {
-        st.writeWord(5, SMS_STS_MAX_TORQUE, percent_x10);
+        st.writeWord(InputID, SMS_STS_MAX_TORQUE, percent_x10);
       }
 
   }

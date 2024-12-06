@@ -2,7 +2,7 @@
 
 #define SMS_STS_MAX_TORQUE 16
 #define MAX_TORQUE_LIMIT   48
-#define SET_MAX_TORQUE     10 // JFQ TODO
+#define SET_MAX_TORQUE     250 // JFQ TODO
 
 // === ST Servo === TypeNum:9
 SMS_STS st;
@@ -57,6 +57,8 @@ bool searchCmd      = false;
 byte activeNumInList = 0;
 s16 activeServoSpeed = 100;
 byte servotoSet = 0;
+
+bool doJ2MultiTurn=false;
 
 // linkageBuffer to save the angle.
 float linkageBuffer[50];
@@ -116,6 +118,12 @@ bool getFeedBack(byte servoID){
 
 }
 
+void activateJ2MultiTurn(){
+
+  // TODO
+  doJ2MultiTurn = true;
+}
+
 
 void getFeedBackAll(){
   ID_Stu[0] = getFeedBack(1);
@@ -158,21 +166,19 @@ void setMiddle(byte InputID){
   {
     Serial.print(InputID); Serial.println(" middle set");
     st.CalibrationOfs(InputID);
-    if(InputID == 5){
-      st.unLockEprom(5);
-      st.writeWord(5, SMS_STS_MAX_TORQUE, SET_MAX_TORQUE);
-      // TODO JFQ, necessary?:
-      st.writeWord(5, MAX_TORQUE_LIMIT, SET_MAX_TORQUE);
-      st.LockEprom(InputID);
-    }
+    st.unLockEprom(InputID);
+    st.writeWord(InputID, SMS_STS_MAX_TORQUE, SET_MAX_TORQUE);
+    // TODO JFQ, necessary?:
+    // SMS_STS_MAX_TORQUE is inital value loaded into MAX_TORQUE_LIMIT during power up
+    st.writeWord(InputID, MAX_TORQUE_LIMIT, SET_MAX_TORQUE);
+    st.LockEprom(InputID);
   }
   else if(ServoType[InputID] == 5)
   {
     Serial.println(" middle set servo 5");
-    //sc.CalibrationOfs()
-    //sc.writeWord
-    //SMS_STS_TORQUE_LIMIT_L
-    // TODO not clear which register is used!!
+    sc.unLockEprom(InputID);
+    st.writeWord(InputID, SMS_STS_MAX_TORQUE, SET_MAX_TORQUE);
+    st.LockEprom(InputID);
   }
   else{
     Serial.println(" middle set FAIL!!");
@@ -186,12 +192,12 @@ void setMaxTorque(byte InputID, uint16_t percent_x10)
   {
       if(ServoType[InputID]==9)
       {
-        st.writeWord(5, SMS_STS_MAX_TORQUE, SET_MAX_TORQUE);
+        st.writeWord(5, MAX_TORQUE_LIMIT, percent_x10);
+        // TODO maybe SMS_STS_MAX_TORQUE register as well?
       }
       else if(ServoType[InputID] == 5)
       {
-        // TODO add tc serco type
-
+        st.writeWord(5, SMS_STS_MAX_TORQUE, percent_x10);
       }
 
   }

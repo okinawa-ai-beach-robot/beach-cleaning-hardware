@@ -522,6 +522,26 @@ void getHelp(){
   Serial.println(jsonCtrlInstructions);
 }
 
+void set_max_torque()
+{
+
+  for (char jn='1'; jn<='5', jn++)
+  {
+    char keystr[] = "Qx";
+    keystr[1]= jn
+    jsonCmdReceive.containsKey(keystr)
+    uint16_t maxq = jsonCmdReceive[keystr].as<uint16_t>()
+    jn-'1';
+    setMaxTorque(1+jn-'1', maxq);
+
+
+  }
+  jsonCmdReceive.containsKey("T")
+
+  jsonPosCtrl[0] = jsonCmdReceive["P1"].as<int>();
+	
+}
+
 
 void getStepInfo(int stepSelect){
   Serial.println("P1: GET_STEP_INFO");

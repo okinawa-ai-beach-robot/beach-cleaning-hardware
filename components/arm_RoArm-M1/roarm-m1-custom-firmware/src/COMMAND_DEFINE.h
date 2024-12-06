@@ -655,11 +655,7 @@ void mainPage(){
 	if(DebugMode){Serial.println("MainPage");}
 }
 
-void set_max_torque()
-{
-	Serial.println("STUB! set_max_torque func");
-	
-}
+
 
 // TODO
 // void set_pwm()

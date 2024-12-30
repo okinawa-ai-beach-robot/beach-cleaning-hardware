@@ -29,7 +29,7 @@ DynamicJsonDocument jsonStepMove(1024);
 //{"T":1,"P1":180,"P2":-15,"P3":100,"P4":45,"P5":50,"S1":200,"S2":200,"S3":200,"S4":200,"S5":200,"A1":60,"A2":60,"A3":60,"A4":60,"A5":60}
 // {"T":1,"P1":180,"P2":-15,"P3":100,"P4":45,"P5":50,"S1":200,"S2":200,"S3":200,"S4":200,"S5":200,"A1":60,"A2":60,"A3":60,"A4":60,"A5":60}
 /*
-{"T":1,"P1":180,"P2":-45,"P3":100,"P4":45,"P5":45,"S1":200,"S2":200,"S3":200,"S4":200,"S5":200,"A1":60,"A2":60,"A3":60,"A4":60,"A5":60}
+{"T":1,"P1":180,"P2":0,"P3":100,"P4":45,"P5":45,"S1":200,"S2":200,"S3":200,"S4":200,"S5":200,"A1":60,"A2":60,"A3":60,"A4":60,"A5":60}
 
 
 
@@ -103,8 +103,8 @@ DynamicJsonDocument jsonStepMove(1024);
 //       CONFIG_ALL_INIT: {"T":9,"P1":6} all servos move to pos2047.
 // CONFIG_TORQUE_ALL_OFF: {"T":9,"P1":7}
 //  CONFIG_TORQUE_ALL_ON: {"T":9,"P1":8}
-//     CONFIG_TORQUE_OFF: {"T":9,"P1":servoNum,"P2":0} // {"T":9,"P1":3,"P2":0}
-//      CONFIG_TORQUE_ON: {"T":9,"P1":servoNum,"P2":1}// {"T":9,"P1":3,"P2":1}
+//     CONFIG_TORQUE_OFF: {"T":9,"P1":servoNum,"P2":0} // {"T":9,"P1":2,"P2":0}
+//      CONFIG_TORQUE_ON: {"T":9,"P1":servoNum,"P2":1}// {"T":9,"P1":2,"P2":1}
 //           CONFIG_MOVE: {"T":9,"P1":servoNum,"P2":2,"P3":PosInput}
 //     CONFIG_SET_MIDDLE: {"T":9,"P1":servoNum,"P2":10} // {"T":9,"P1":2,"P2":10} 
 

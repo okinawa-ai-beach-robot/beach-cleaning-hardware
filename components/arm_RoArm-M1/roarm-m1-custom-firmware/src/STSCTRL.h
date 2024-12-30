@@ -85,7 +85,7 @@ bool getFeedBack(byte servoID){
     else{
       if(serialFeedback){
         Serial.println("FeedBack err 9");
-        Serial.print("ID"); Serial.print(servoID); Serial.println(" ");
+        Serial.print("ID "); Serial.print(servoID); Serial.println("");
       }
       feedBackErrorCheck = true;
       return false;
@@ -149,6 +149,14 @@ void servoInit(){
 
     Serial.print("Servotype: ");
     Serial.println(ServoType[i]);
+
+    if (ServoType[i]==9)
+    {
+      // OIST, Jeffrey, I experienced setting changes of servo "2", mode changed to stepper motor mode, and readings of position failed.
+      // As the cause of this setting changes is unknow, I reset the motor to servo mode on power up for now.
+      st.writeByte(i, SMS_STS_MODE, 0);
+    }
+
 
     // if (ServoType[i]==9)
     // {

@@ -195,6 +195,7 @@ WebServer server(80);
 
 
 void setup() {
+
   delay(1000);
   Serial.begin(115200);
   while(!Serial) {}
@@ -211,13 +212,16 @@ void setup() {
   
   boardDevInit();
 Serial.println("boardDevInit");
+screenUpdate((const char*)F("Device init: OK"));
   servoInit();
 Serial.println("servoInit");
+screenUpdate((const char*)F("Servo init: OK"));
   bootPosCheck();
 Serial.println("bootPosCheck");
+screenUpdate((const char*)F("Boot pos check: OK"));
   wifiInit();
 
-  espNowInit();
+  //espNowInit();
 
   webServerSetup();
 Serial.println("webServerSetup");
@@ -227,6 +231,7 @@ Serial.println("webServerSetup");
     torqueCtrlAll(0);
   }
   Serial.println("init ok");
+  screenUpdate((const char*)F("Beachbot Ready!"));
 
 }
 
@@ -240,5 +245,5 @@ void loop() {
 // delay(2000);
 //   setTargetJointAngle(5, 800, 100, 150);
 
-  delay(100);
+  //delay(100);
 }

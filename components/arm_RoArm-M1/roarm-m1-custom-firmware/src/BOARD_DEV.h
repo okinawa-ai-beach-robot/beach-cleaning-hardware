@@ -49,6 +49,28 @@ void screenUpdate(){
   display.display();
 }
 
+// information update on OLED.
+void screenUpdate(const char* l1, const char* l2=NULL, const char* l3=NULL, const char* l4=NULL){
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0,0);
+  // Row1.
+  if (l1!=NULL) display.println(l1);
+  else display.println("");
+  // Row2.
+  if (l2!=NULL) display.println(l2);
+  else display.println("");
+  // Row3.
+  if (l3!=NULL) display.println(l3);
+  else display.println("");
+  // Row3.
+  if (l4!=NULL) display.println(l4);
+
+
+  display.display();
+}
+
 
 void debugInfo(){
   display.clearDisplay();
@@ -75,7 +97,7 @@ void boardDevInit(){
 void InfoUpdateThreading(void *pvParameter){
   while(1){
     screenUpdate();
-    delay(10000);
+    delay(1000);
   }
 }
 
@@ -83,7 +105,7 @@ void InfoUpdateThreading(void *pvParameter){
 void serverThreading(void *pvParameter){
   while(1){
     cmdThreading();
-    cmdProcess();
+    // cmdProcess();
     // espNowProcess();
     delay(2);
   }
@@ -109,7 +131,7 @@ void espNowThreading(void *pvParameter){
 
 
 void threadInit(){
-  xTaskCreatePinnedToCore(&InfoUpdateThreading, "InfoUpdate", 4000, NULL, 5, &ScreenUpdateHandle, ARDUINO_RUNNING_CORE);
+  //xTaskCreatePinnedToCore(&InfoUpdateThreading, "InfoUpdate", 4000, NULL, 5, &ScreenUpdateHandle, ARDUINO_RUNNING_CORE);
   xTaskCreatePinnedToCore(&serverThreading, "InfoUpdate", 4000, NULL, 5, &ServerCmdHandle, ARDUINO_RUNNING_CORE);
   // xTaskCreate(&serverThreading, "Server", 4000, NULL, 5, &ServerCmdHandle);
   xTaskCreate(&espNowThreading, "ESP-NOW", 4000, NULL, 5, &EspNowHandle);

@@ -1,5 +1,7 @@
 #include <ArduinoJson.h>
 
+extern void screenUpdate(const char* l1, const char* l2, const char* l3, const char* l4);
+
 
 void set_led_rgb(uint8_t nr, uint8_t r, uint8_t g, uint8_t b)
 {
@@ -77,7 +79,7 @@ DynamicJsonDocument jsonStepMove(1024);
 // {"T":4}
 
 // GET_ANGTOR_INFO: get the angle $ torque info of every servo.
-// {"T":5}
+// {"T":5}{"T":5}
 
 // GET_INFO_BUFFER: get the buffer of IK.
 // {"T":6}
@@ -134,6 +136,7 @@ DynamicJsonDocument jsonStepMove(1024);
 #define SET_MAX_TORQUE_CMD 100
 #define SET_PWM 101
 #define SET_LED 102
+#define SET_DSPL 103
 
 
 
@@ -314,6 +317,20 @@ void getStPos(){
   else{jsonPosList[3] = 2047;}
   if(getFeedBack(5)){jsonPosList[4] = posRead[5];}
   else{jsonPosList[4] = 2047;}
+}
+
+void jsonDSPL()
+{
+  const char* l1=NULL;
+  const char* l2=NULL;
+  const char* l3=NULL;
+  const char* l4=NULL;
+
+   if ( jsonCmdReceive.containsKey("L1"))l1 = jsonCmdReceive["L1"].as<const char*>();
+   if ( jsonCmdReceive.containsKey("L2"))l2 = jsonCmdReceive["L2"].as<const char*>();
+   if ( jsonCmdReceive.containsKey("L3"))l3 = jsonCmdReceive["L3"].as<const char*>();
+   if ( jsonCmdReceive.containsKey("L4"))l4 = jsonCmdReceive["L4"].as<const char*>();
+   screenUpdate(l1,l2,l3,l4);
 }
 
 

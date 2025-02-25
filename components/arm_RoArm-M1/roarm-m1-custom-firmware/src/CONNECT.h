@@ -308,10 +308,11 @@ void cmdProcess(){
     case             HELP:getHelp();processType = -1;break;
       
     case SET_MAX_TORQUE_CMD:set_max_torque();processType = -1;break;
+    case SET_DSPL: jsonDSPL();processType = -1;break;
     case SET_PWM:/*set_pwm();*/processType = -1;break;
     case SET_LED:set_led();processType = -1;break;
 
-    case               -1:delay(3);
+    case               -1:Serial.println("processType=-1");delay(3);
   }
 }
 
@@ -325,13 +326,16 @@ void jsonCtrl(String cmdJsonInput){
 void serialCtrl(){
   if (Serial.available()){
     DeserializationError err = deserializeJson(jsonCmdReceive, Serial);
-    if (err == DeserializationError::Ok && jsonCmdReceive.containsKey("T")){
+    if (err == DeserializationError::Ok ){
+      if ( jsonCmdReceive.containsKey("T")){
       CtrlModeSelect = CTRL_VIA_SERIAL;
       cmdHandler();
+      cmdProcess();
+      }
     }
     else{
       while (Serial.available() > 0){
-        Serial.read();
+        if ('\n' == Serial.read()) break;
       }
     }
   }
